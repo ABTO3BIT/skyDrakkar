@@ -1,0 +1,19 @@
+<error-page>
+  <error-code>500</error-code>
+  <location>/service_errors/500.html</location>
+</error-page>
+
+<error-page>
+  <error-code>404</error-code>
+  <location>/service_errors/404.html</location>
+</error-page>
+
+<error-page>
+  <exception-type>java.lang.NullPointerException</exception-type>
+  <location>/service_errors/java_lang_null_pointer_exception.html</location>
+</error-page>
+
+<error-page>
+  <exception-type>java.lang.Throwable</exception-type>
+  <location>/service_errors/java_lang_throwable.html</location>
+</error-page>
