@@ -19,9 +19,9 @@ http response: {"results":[{"session_id":"1","language":"ENGLISH","active":"1"}
 
 html text file code:
 
-%writedata/json/param0%writedata
-%writedata/json/param1%writedata
-%if "param6" %if
+    %writedata/json/param0%writedata
+    %writedata/json/param1%writedata
+    %if "param6" %if
 
       %set_param7=@this.getExtra("offset")%set_param
       %set_param8=@this.getExtra("rows")%set_param
@@ -51,6 +51,6 @@ html text file code:
         %endif%endif
         {"results":[{"session_id":"%sessionid%sessionid","message":"Data not found","database_message":"%param21%param"}],"status":"ERROR"}
       %endif%endif
-%elseif%elseif
-  {"results":[{"session_id":"%sessionid%sessionid","message":"Invalid username or password"}],"status":"ERROR"}
-%endif%endif
+    %elseif%elseif
+      {"results":[{"session_id":"%sessionid%sessionid","message":"Invalid username or password"}],"status":"ERROR"}
+    %endif%endif
