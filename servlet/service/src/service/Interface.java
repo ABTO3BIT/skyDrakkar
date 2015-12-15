@@ -1,12 +1,12 @@
 package service;
 public interface Interface
 {
-  public static final int CLASS_VERSION=82;
+  public static final int CLASS_VERSION=84;
   //public static final boolean DEBUG=false;
   //[local]
   public static final String LOCAL_SYSTEM="service";
   public static final String LOCAL_NAME="<skyDrakkar>";
-  public static final String LOCAL_VERSION="2.1 dragonFire";//compiled version
+  public static final String LOCAL_VERSION="2.3 dragonFire";//compiled version
   public static final String LOCAL_DELIM="/";
   public static final String LOCAL_DELIM_2=System.getProperty("file.separator");
   //[request&response]
@@ -78,6 +78,7 @@ public interface Interface
   public static final int COUNT_DATABASE_SESSIONS=64;//live connections for other users(identified by login,password)
   public static final int COUNT_DATABASE_BLACKLIST=3;//number of blacklist enter
   //[length && size]
+  public static final int LENGTH_LOG_VALUE=1024;
   public static final int LENGTH_LOG_MESSAGE=256;
   public static final int LENGTH_LOG_SUBMESSAGE=240;
   public static final int SIZE_BUFFER_READ=8192;

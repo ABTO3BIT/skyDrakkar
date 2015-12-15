@@ -162,7 +162,7 @@ class InvalidLogin{
 public class Manager extends HttpServlet implements Interface,tools.Interface
 {
   //////////////////////////////////////////////////////////////////////////////
-  public static final int CLASSES_VERSION=61;
+  public static final int CLASSES_VERSION=63;
   private long SessionID=0,LastSessionID=SessionID;
   private Vector Sessions=null;//server sessions
   private Session SessionsControl=null,ServicesControl=null/*,NetListener=null*/;
@@ -763,13 +763,15 @@ class ClientSession implements Interface,tools.Interface
             //set param_type
             if(index>=sp.ParamTypeList.size())sp.ParamTypeList.setSize(index+1);
             sp.ParamTypeList.setElementAt(SERVICE_PARAM_TYPE_STRING,index);
-            Manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+MESSAGE_DELIM_SUBVALUES+va);
+            size=va.length();
+            Manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?size:EQUAL+va));
           }
         }
         else if(pa.equalsIgnoreCase(SERVICE_SQL)||pa.startsWith(SERVICE_SQL)){//name="SQL"||"sql.."
           s=va;
           sp.SQLList.add(s);
-          Manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_SQL+MESSAGE_DELIM_SUBVALUES+s);
+          size=va.length();
+          Manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_SQL+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?size:EQUAL+va));
         }
         else if(pa.startsWith(SERVICE_COOKIE_NAME)){
           cookie_name=va;
@@ -794,7 +796,8 @@ class ClientSession implements Interface,tools.Interface
         }
         else{//save all other content data as extra
           sp.ExtraList.put(pa,va);
-          Manager.getLog().write(session_id,INFO_SERVICE_CONTENT_REGISTERED,pa+MESSAGE_DELIM_SUBVALUES+va.length());
+          size=va.length();
+          Manager.getLog().write(session_id,INFO_SERVICE_CONTENT_REGISTERED,pa+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?size:EQUAL+va));
         }
       }
       buf=null;
@@ -942,7 +945,9 @@ class ClientSession implements Interface,tools.Interface
     Enumeration par_names=request.getParameterNames();
     for(;par_names.hasMoreElements();){
       par_name=(String)par_names.nextElement();
-      sp.ExtraList.put(par_name,(String)request.getParameter(par_name));
+      s=(String)request.getParameter(par_name);
+      s=new String(s.getBytes(request_codepage),Manager.getLocalCodepage());//default: decode ISO-8859-1 -> Cp1251
+      sp.ExtraList.put(par_name,s);
     }
     //[parse paramlist]
     Object[] objects=request.getParameterMap().keySet().toArray();
@@ -6006,7 +6011,7 @@ final class MessageList implements Interface,tools.Interface
     switch(id){
       //[info]
       case INFO_DEVELOPER_DESCRIPTION:ret_val="[ ABTO3BIT software company 2006 - 2015 c ]";break;
-      case INFO_SERVER_DESCRIPTION:ret_val="[ <skyDrakkar> 2.1 dragonFire release 16.10.2015 ]";break;
+      case INFO_SERVER_DESCRIPTION:ret_val="[ <skyDrakkar> 2.3 dragonFire release 15.12.2015 ]";break;
       case INFO_SERVER_LOADING:ret_val="Loading >>>";break;
       case INFO_SERVER_UNLOADING:ret_val="Unloading <<<";break;
       case INFO_SERVER_SHUTDOWN:ret_val="^";break;
