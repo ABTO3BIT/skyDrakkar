@@ -1,12 +1,12 @@
 package service;
 public interface Interface
 {
-  public static final int CLASS_VERSION=84;
+  public static final int CLASS_VERSION=86;
   //public static final boolean DEBUG=false;
   //[local]
   public static final String LOCAL_SYSTEM="service";
   public static final String LOCAL_NAME="<skyDrakkar>";
-  public static final String LOCAL_VERSION="2.3 dragonFire";//compiled version
+  public static final String LOCAL_VERSION="2.5 dragonFire";//compiled version
   public static final String LOCAL_DELIM="/";
   public static final String LOCAL_DELIM_2=System.getProperty("file.separator");
   //[request&response]

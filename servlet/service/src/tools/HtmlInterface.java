@@ -1,4 +1,4 @@
-//class version 1.4
+//class version 1.5
 package tools;
 //--------------------------------HtmlInterface------------------------------------//
 public interface HtmlInterface
@@ -34,6 +34,7 @@ public interface HtmlInterface
   public static final int HTML_SUBTYPE_DIV=105;
   public static final int HTML_SUBTYPE_B=106;
   //html name
+  public static final String HTML_ELEMENT_JAVASCRIPT="javascript";
   public static final String HTML_ELEMENT_COMMENT_START="!--";//start comment
   public static final String HTML_ELEMENT_COMMENT_FINISH="--";//finish comment
   public static final String HTML_ELEMENT_ID="id";

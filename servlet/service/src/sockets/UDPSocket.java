@@ -6,99 +6,99 @@ import java.net.*;
 
 public class UDPSocket
 {
-  private DatagramSocket Socket=null;
-  private DatagramPacket Packet=null;
-  private byte[] PacketBuffer=null;
-  private InetAddress LocalHostAddress=null,RemoteHostAddress=null;
-  private String LocalHost="",RemoteHost="";
-  private int LocalPort=0,RemotePort=0;
-  private int PacketBufferSize=1024;
-  private boolean Open=false;
+  private DatagramSocket socket=null;
+  private DatagramPacket packet=null;
+  private byte[] packetBuffer=null;
+  private InetAddress localHostAddress=null,remoteHostAddress=null;
+  private String localHost="",remoteHost="";
+  private int localPort=0,remotePort=0;
+  private int packetBufferSize=1024;
+  private boolean open=false;
   //--------public----------
   public UDPSocket(){}
-  public UDPSocket(int port){LocalPort=port;}
-  public UDPSocket(String host,int port){LocalHost=host;LocalPort=port;}
+  public UDPSocket(int port){localPort=port;}
+  public UDPSocket(String host,int port){localHost=host;localPort=port;}
   public UDPSocket(String local_host,int local_port,String remote_host,int remote_port)
   {
-    LocalHost=local_host;LocalPort=local_port;
-    RemoteHost=remote_host;RemotePort=remote_port;
+    localHost=local_host;localPort=local_port;
+    remoteHost=remote_host;remotePort=remote_port;
   }
   //---is/get section---
-  public DatagramSocket getSocket(){return Socket;}
-  public String getLocalHost(){return LocalHost;}
-  public String getRemoteHost(){return RemoteHost;}
-  public String getSocketLocalAddress(){return Socket.getLocalAddress().toString();}
-  public String getSocketLocalHostAddress(){return Socket.getLocalAddress().getHostAddress();}
-  public String getSocketLocalHostName(){return Socket.getLocalAddress().getHostName();}
-  public byte[] getSocketLocalByteAddress(){return Socket.getLocalAddress().getAddress();}
-  public String getPacketRemoteAddress(){return Packet.getAddress().toString();}
-  public String getPacketRemoteHostAddress(){return Packet.getAddress().getHostAddress();}
-  public String getPacketRemoteHostName(){return Packet.getAddress().getHostName();}
-  public byte[] getPacketRemoteByteAddress(){return Packet.getAddress().getAddress();}
-  public int getLocalPort(){ return LocalPort;}
-  public int getSocketLocalPort(){return Socket.getLocalPort();}
-  public int getRemotePort(){return RemotePort;}
-  public int getPacketRemotePort(){return Packet.getPort();}
-  public InetAddress getLocalHostAddress(){return LocalHostAddress;}
-  public InetAddress getRemoteHostAddress(){return RemoteHostAddress;}
+  public DatagramSocket getSocket(){return socket;}
+  public String getLocalHost(){return localHost;}
+  public String getRemoteHost(){return remoteHost;}
+  public String getSocketLocalAddress(){return socket.getLocalAddress().toString();}
+  public String getSocketLocalHostAddress(){return socket.getLocalAddress().getHostAddress();}
+  public String getSocketLocalHostName(){return socket.getLocalAddress().getHostName();}
+  public byte[] getSocketLocalByteAddress(){return socket.getLocalAddress().getAddress();}
+  public String getPacketRemoteAddress(){return packet.getAddress().toString();}
+  public String getPacketRemoteHostAddress(){return packet.getAddress().getHostAddress();}
+  public String getPacketRemoteHostName(){return packet.getAddress().getHostName();}
+  public byte[] getPacketRemoteByteAddress(){return packet.getAddress().getAddress();}
+  public int getLocalPort(){ return localPort;}
+  public int getSocketLocalPort(){return socket.getLocalPort();}
+  public int getRemotePort(){return remotePort;}
+  public int getPacketRemotePort(){return packet.getPort();}
+  public InetAddress getLocalHostAddress(){return localHostAddress;}
+  public InetAddress getRemoteHostAddress(){return remoteHostAddress;}
   public String getPacketToString()
   {
     String packet_string="";//null
     try{
       ByteArrayOutputStream packet_stream=new ByteArrayOutputStream();
-      packet_stream.write(PacketBuffer,0,PacketBuffer.length);
+      packet_stream.write(packetBuffer,0,packetBuffer.length);
       packet_string=packet_stream.toString();
       packet_stream.close();packet_stream=null;
     }catch(IOException io_e){}
     return packet_string;
   }
-  public byte[] getPacketBuffer(){return PacketBuffer;}
-  public byte[] getPacketData(){return Packet.getData();}
-  public int getPacketBufferSize(){return PacketBufferSize;}
-  public int getPacketLength(){return Packet.getLength();}
+  public byte[] getPacketBuffer(){return packetBuffer;}
+  public byte[] getPacketData(){return packet.getData();}
+  public int getPacketBufferSize(){return packetBufferSize;}
+  public int getPacketLength(){return packet.getLength();}
   public int getTimeout()
   {
     int timeout=0;
-    try{timeout=Socket.getSoTimeout();}catch(IOException io_e){}
+    try{timeout=socket.getSoTimeout();}catch(IOException io_e){}
     return timeout;
   }
-  public boolean isOpen(){return Open;}
+  public boolean isOpen(){return open;}
   //---set section---
-  public void setSocket(DatagramSocket socket){Socket=socket;}
-  public void setLocalHost(String host){LocalHost=host;}
-  public void setRemoteHost(String host){RemoteHost=host;}
-  public void setLocalPort(int port){LocalPort=port;}
-  public void setLocalPort(String port){LocalPort=Integer.valueOf(port).intValue();}
-  public void setRemotePort(int port){RemotePort=port;}
-  public void setRemotePort(String port){RemotePort=Integer.valueOf(port).intValue();}
-  public void setPacketBuffer(String buffer){PacketBuffer=buffer.getBytes();}
-  public void setPacketBuffer(byte[] buffer){PacketBuffer=buffer;}
-  public void setPacketBufferSize(int size){PacketBufferSize=size;}
-  public void setRemoteHostAddress(InetAddress address){RemoteHostAddress=address;}
+  public void setSocket(DatagramSocket socket){this.socket=socket;}
+  public void setLocalHost(String host){localHost=host;}
+  public void setRemoteHost(String host){remoteHost=host;}
+  public void setLocalPort(int port){localPort=port;}
+  public void setLocalPort(String port){localPort=Integer.valueOf(port).intValue();}
+  public void setRemotePort(int port){remotePort=port;}
+  public void setRemotePort(String port){remotePort=Integer.valueOf(port).intValue();}
+  public void setPacketBuffer(String buffer){packetBuffer=buffer.getBytes();}
+  public void setPacketBuffer(byte[] buffer){packetBuffer=buffer;}
+  public void setPacketBufferSize(int size){packetBufferSize=size;}
+  public void setRemoteHostAddress(InetAddress address){remoteHostAddress=address;}
   public InetAddress setRemoteHostAddress(String host)
   {
-    RemoteHostAddress=null;
-    RemoteHost=host;
-    try{RemoteHostAddress=InetAddress.getByName(RemoteHost);}catch(UnknownHostException u_h_e){}
-    return RemoteHostAddress;
+    remoteHostAddress=null;
+    remoteHost=host;
+    try{remoteHostAddress=InetAddress.getByName(remoteHost);}catch(UnknownHostException u_h_e){}
+    return remoteHostAddress;
   }
   public void setReply()
   {
-    InetAddress address=Packet.getAddress();
-    RemoteHost=address.getHostAddress();
-    RemotePort=Packet.getPort();
+    InetAddress address=packet.getAddress();
+    remoteHost=address.getHostAddress();
+    remotePort=packet.getPort();
   }
-  public void setTimeout(int timeout){try{Socket.setSoTimeout(timeout);}catch(IOException io_e){}}
+  public void setTimeout(int timeout){try{socket.setSoTimeout(timeout);}catch(IOException io_e){}}
   /////////////////////////////////////////////////
   public boolean send()
   {
     boolean is_send=false;
     try{
-      Packet.setAddress(RemoteHostAddress);
-      Packet.setPort(RemotePort);
-      Packet.setData(PacketBuffer);
-      Packet.setLength(PacketBuffer.length);
-      Socket.send(Packet);
+      packet.setAddress(remoteHostAddress);
+      packet.setPort(remotePort);
+      packet.setData(packetBuffer);
+      packet.setLength(packetBuffer.length);
+      socket.send(packet);
       is_send=true;
     }catch(IOException io_e){}
     return is_send;
@@ -107,11 +107,11 @@ public class UDPSocket
   {
     boolean is_send=false;
     try{
-      Packet.setAddress(RemoteHostAddress);
-      Packet.setPort(RemotePort);
-      Packet.setData(buffer);
-      Packet.setLength(buffer.length);
-      Socket.send(Packet);
+      packet.setAddress(remoteHostAddress);
+      packet.setPort(remotePort);
+      packet.setData(buffer);
+      packet.setLength(buffer.length);
+      socket.send(packet);
       is_send=true;
     }catch(IOException io_e){}
     return is_send;
@@ -120,11 +120,11 @@ public class UDPSocket
   {
     boolean is_send=false;
     try{
-      Packet.setAddress(RemoteHostAddress);
-      Packet.setPort(RemotePort);
-      Packet.setData(buffer,index,count);
-      Packet.setLength(count);
-      Socket.send(Packet);
+      packet.setAddress(remoteHostAddress);
+      packet.setPort(remotePort);
+      packet.setData(buffer,index,count);
+      packet.setLength(count);
+      socket.send(packet);
       is_send=true;
     }catch(IOException io_e){}
     return is_send;
@@ -132,12 +132,12 @@ public class UDPSocket
   public boolean recv()
   {
     boolean is_receive=false;
-    PacketBuffer=null;
+    packetBuffer=null;
     try{
-      PacketBuffer=new byte[PacketBufferSize];
-      Packet.setData(PacketBuffer);
-      Packet.setLength(PacketBuffer.length);
-      Socket.receive(Packet);
+      packetBuffer=new byte[packetBufferSize];
+      packet.setData(packetBuffer);
+      packet.setLength(packetBuffer.length);
+      socket.receive(packet);
       is_receive=true;
     }catch(IOException io_e){}
     return is_receive;
@@ -146,53 +146,53 @@ public class UDPSocket
   {
     boolean is_open=false;
     try{
-      if(!LocalHost.trim().equals("")){
-        LocalHostAddress=InetAddress.getByName(LocalHost);
-        Socket=new DatagramSocket(LocalPort,LocalHostAddress);
+      if(!localHost.trim().equals("")){
+        localHostAddress=InetAddress.getByName(localHost);
+        socket=new DatagramSocket(localPort,localHostAddress);
       }
-      else Socket=new DatagramSocket(LocalPort);
-      PacketBufferSize=Socket.getReceiveBufferSize();
-      PacketBuffer=new byte[0];
-      Packet=new DatagramPacket(PacketBuffer,PacketBuffer.length);
+      else socket=new DatagramSocket(localPort);
+      packetBufferSize=socket.getReceiveBufferSize();
+      packetBuffer=new byte[0];
+      packet=new DatagramPacket(packetBuffer,packetBuffer.length);
       is_open=true;
     }catch(IOException io_e){}
-    return Open=is_open;
+    return open=is_open;
   }
   public boolean openLocal()
   {
     boolean is_open=false;
     try{
-      Socket=new DatagramSocket();
-      PacketBufferSize=Socket.getReceiveBufferSize();
-      PacketBuffer=new byte[0];
-      Packet=new DatagramPacket(PacketBuffer,PacketBuffer.length);
+      socket=new DatagramSocket();
+      packetBufferSize=socket.getReceiveBufferSize();
+      packetBuffer=new byte[0];
+      packet=new DatagramPacket(packetBuffer,packetBuffer.length);
       is_open=true;
     }catch(IOException io_e){}
-    return Open=is_open;
+    return open=is_open;
   }
   public boolean open()
   {
     boolean is_open=false;
     try{
-      LocalHostAddress=InetAddress.getByName(LocalHost);
-      Socket=new DatagramSocket(LocalPort,LocalHostAddress);
-      PacketBufferSize=Socket.getReceiveBufferSize();
-      PacketBuffer=new byte[0];
-      Packet=new DatagramPacket(PacketBuffer,PacketBuffer.length);
+      localHostAddress=InetAddress.getByName(localHost);
+      socket=new DatagramSocket(localPort,localHostAddress);
+      packetBufferSize=socket.getReceiveBufferSize();
+      packetBuffer=new byte[0];
+      packet=new DatagramPacket(packetBuffer,packetBuffer.length);
       is_open=true;
     }catch(IOException io_e){}
-    return Open=is_open;
+    return open=is_open;
   }
   public boolean close()
   {
     boolean is_close=false;
-    if(Socket!=null){Socket.close();Socket=null;}
-    if(Packet!=null)Packet=null;
-    if(PacketBuffer!=null){PacketBuffer=null;}
-    if(RemoteHostAddress!=null)RemoteHostAddress=null;
-    if(LocalHostAddress!=null)LocalHostAddress=null;
+    if(socket!=null){socket.close();socket=null;}
+    if(packet!=null)packet=null;
+    if(packetBuffer!=null){packetBuffer=null;}
+    if(remoteHostAddress!=null)remoteHostAddress=null;
+    if(localHostAddress!=null)localHostAddress=null;
     is_close=true;
-    Open=!is_close;
+    open=!is_close;
     return is_close;
   }
 }
