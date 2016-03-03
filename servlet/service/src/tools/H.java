@@ -1,7 +1,6 @@
-//class version 1.5
 package tools;
-//--------------------------------HtmlInterface------------------------------------//
-public interface HtmlInterface
+/*HTML final const*/
+public class H
 {
   //[html]
   //html element type

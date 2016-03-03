@@ -1,7 +1,6 @@
-//class version 1.9
 package tools;
-//------------------------------------Interface------------------------------------//
-public interface Interface
+/*CODE final const*/
+public class C
 {
   //[code]
   public static final char CODE_OPEN='<';
@@ -31,6 +30,7 @@ public interface Interface
   public static final String SPACE8="        ";
   public static final String POINT=".";
   public static final String DOUBLE_POINT="..";
+  public static final String THRID_POINT="...";
   public static final String DOUBLE_UP_POINT=":";
   public static final String COMA=",";
   public static final String POINT_COMA=";";
@@ -73,7 +73,7 @@ public interface Interface
   public static final String MORE_EQUAL=">=";
   public static final String NOT_EQUAL="!=";
   public static final String NOT_EQUAL_="<>";
-  public static final String QUOT="&quot;";//"  
+  public static final String QUOT="&quot;";//"
   public static final String APOS="&#39;"/*"&apos;"explorer failed*/;//'
   public static final String LT="&lt;";//<
   public static final String GT="&gt;";//>

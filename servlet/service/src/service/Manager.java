@@ -92,6 +92,8 @@ import java.util.HashMap;
 //import sun.misc.BASE64Encoder;//use native class
 //import sun.misc.BASE64Decoder;//use native class
 //tools->
+import tools.C;
+import tools.H;
 import tools.Convert;
 import tools.HtmlParse;
 //sockets->
@@ -159,10 +161,10 @@ class InvalidLogin{
 //--------------------------------manager-------------------------------------//
 //WARNING! All debug string is comment
 //for uncomment-> "if(debug)" && "if(manager.isDebug())" (replace all "//if(debug)" for "if(debug)")
-public class Manager extends HttpServlet implements Interface,tools.Interface
+public class Manager extends HttpServlet implements I
 {
   //////////////////////////////////////////////////////////////////////////////
-  public static final int CLASSES_VERSION=65;
+  public static final int CLASSES_VERSION=67;
   private long sessionID=0,lastSessionID=sessionID;
   private Vector sessions=null;//server sessions
   private Session sessionsControl=null,servicesControl=null/*,netListener=null*/;
@@ -192,7 +194,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
   public Vector getSessions(){return sessions;}
   public Hashtable getDefaultDatabaseSessions(){return defaultDatabaseSessions;}
   public Hashtable getDatabaseSessions(){return databaseSessions;}
-  //public Hashtable getClientSessions(){return ClientSessions;}
+  //public Hashtable getClientSessions(){return clientSessions;}
   public int getDatabaseSessionsCount(){return databaseSessionsCount;}
   public int getDatabaseSessionsTimeout(){return databaseSessionsTimeout;}
   public Vector getBlackList(){return blackList;}
@@ -204,14 +206,14 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
   public Log getLog(){return log;}
   public PageFormat getPageFormat(){return pageFormat;}
   public String getLogFilepathWithDate(String filepath){
-    String ret_val=EMPTY;
+    String ret_val=C.EMPTY;
     Date date=new Date();
     int day,month,year;
     if(filepath!=null){
       day=date.getDate();
       month=1+date.getMonth();
       year=1900+date.getYear();
-      ret_val=filepath+DOWN+day+DOWN+month+DOWN+year;
+      ret_val=filepath+C.DOWN+day+C.DOWN+month+C.DOWN+year;
     }
     return ret_val;
   }
@@ -244,8 +246,8 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
     systemCodepage=System.getProperty("file.encoding");
     try{//if class(init)->execute from non web server
       //windows path: "C:/Program Files/Apache Software Foundation/Tomcat 6.0/webapps/service/"
-      if(servletFilepath==null){servletFilepath=getServletContext().getRealPath(EMPTY);servletLog=true;}
-    }catch(Exception e){servletFilepath=EMPTY;}
+      if(servletFilepath==null){servletFilepath=getServletContext().getRealPath(C.EMPTY);servletLog=true;}
+    }catch(Exception e){servletFilepath=C.EMPTY;}
     //[server started]
     //if(debug)System.out.println("<server started>");
     /*init file seek*/
@@ -265,14 +267,14 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
     //if(debug)System.out.println("<init file>");
     initial=new Initial();
     if(str==null||!initial.open(str,this)){
-      System.out.println(getMessageByID(ERROR_INITIAL_NOT_FOUND)+SPACE+filepath);
+      System.out.println(getMessageByID(ERROR_INITIAL_NOT_FOUND)+C.SPACE+filepath);
       return;
     }else initialFilepath=str;
-    if(initial.getLocalDebug()!=null&&initial.getLocalDebug().equalsIgnoreCase(ON))debug=true;
+    if(initial.getLocalDebug()!=null&&initial.getLocalDebug().equalsIgnoreCase(C.ON))debug=true;
     if(initial.getLocalCodepage()!=null)localCodepage=initial.getLocalCodepage();else localCodepage=RESPONSE_CODEPAGE;
     if(initial.getLocalContentType()!=null)localContentType=initial.getLocalContentType();else localContentType=CONTENT_TYPE_TEXT_HTML;
     if(initial.getDatabasePassword()!=null){
-      if(initial.getDatabasePassword().equalsIgnoreCase(ON)){
+      if(initial.getDatabasePassword().equalsIgnoreCase(C.ON)){
         databasePassword=true;
         enigmaData=new byte[36];
         byte[] b1={15,29,30,1,116,50};
@@ -284,7 +286,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
         enigmaData[30]=89;enigmaData[31]=31;enigmaData[32]=6;enigmaData[33]=91;enigmaData[34]=9;enigmaData[35]=36;
         System.arraycopy(b1,0,enigmaData,0,6);
       }
-      else if(initial.getDatabasePassword().equalsIgnoreCase(OFF))databasePassword=false;
+      else if(initial.getDatabasePassword().equalsIgnoreCase(C.OFF))databasePassword=false;
       else{
         databasePassword=true;
         enigmaData=initial.getDatabasePassword().getBytes();
@@ -299,17 +301,17 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
     /*file log*/
     //if(debug)System.out.println("<file log>");
     str=null;
-    if(initial.getLocalLog()!=null&&(initial.getLocalLog().equalsIgnoreCase(ON)||initial.getLocalLog().equals(EMPTY)))//default filename open
+    if(initial.getLocalLog()!=null&&(initial.getLocalLog().equalsIgnoreCase(C.ON)||initial.getLocalLog().equals(C.EMPTY)))//default filename open
       str=servletFilepath+FILEPATH_LOG;
-    else if(initial.getLocalLog()!=null&&(initial.getLocalLog().toLowerCase().endsWith(POINT+EXTENSION_FILE_LOG)))//filename from ini open
+    else if(initial.getLocalLog()!=null&&(initial.getLocalLog().toLowerCase().endsWith(C.POINT+EXTENSION_FILE_LOG)))//filename from ini open
       str=initial.getLocalLog();//local_log may be a log filepath with ".log" ends (/log/service.log)
     log=new Log();//log->file
     //if(debug)System.out.println("<before file log open>");
     if(log.open(str,this)){//is debug ?
       log.write("---------------------------------------------------------------\r\n");//debug
-      log.write(LOCAL_NAME+LOCAL_VERSION+NEXT_LINE);//debug
+      log.write(LOCAL_NAME+LOCAL_VERSION+C.NEXT_LINE);//debug
       log.write("---------------------------------------------------------------\r\n");//debug
-      log.write(sessionID,INFO_LOG_ACTIVATED,initial.getLocalLog().equalsIgnoreCase(ON)?FILENAME_LOG:initial.getLocalLog());
+      log.write(sessionID,INFO_LOG_ACTIVATED,initial.getLocalLog().equalsIgnoreCase(C.ON)?FILENAME_LOG:initial.getLocalLog());
     }
     //if(debug)System.out.println("<after file log open>");
     //Log.write(systemCodepage+NEXT_LINE);
@@ -318,7 +320,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
     /*database log*/
     //if(debug)System.out.println("<database log>");
     databaseLog=initial.getDatabaseLog();//address from ini
-    if(databaseLog==null||databaseLog.equals(EMPTY)){
+    if(databaseLog==null||databaseLog.equals(C.EMPTY)){
     try{//address from file
       str=null;
       filepath=servletFilepath+FILEPATH_WEB_INF+FILEPATH_LOG_INI;
@@ -329,7 +331,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
         file=new File(filepath);
         if(file.exists()&&file.isFile())str=filepath;
       }
-      if(str!=null&&!str.equals(EMPTY)){
+      if(str!=null&&!str.equals(C.EMPTY)){
         databaseLog=Convert.toString(Convert.readFromFile(str));//log->database
       }
     }catch(Exception e){}
@@ -354,7 +356,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
           if(file.exists()&&file.isFile())str=filepath;
         }//else
       }//else
-      if(str!=null&&!str.equals(EMPTY)){
+      if(str!=null&&!str.equals(C.EMPTY)){
         log.write(sessionID,INFO_DATABASE_USERS_ACTIVATED,filepath);
         BufferedReader file_stream=new BufferedReader(new FileReader(str));
         while(true){
@@ -388,7 +390,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
           if(file.exists()&&file.isFile())str=filepath;
         }//else
       }//else
-      if(str!=null&&!str.equals(EMPTY)){
+      if(str!=null&&!str.equals(C.EMPTY)){
         log.write(sessionID,INFO_DATABASE_BLACKLIST_ACTIVATED,filepath);
         BufferedReader file_stream=new BufferedReader(new FileReader(str));
         while(true){
@@ -516,7 +518,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
   public void doGet(HttpServletRequest request,HttpServletResponse response) throws ServletException,IOException
   {
     ClientSession client_session=new ClientSession(this,request,response);
-    //ClientSessions.put(client_session.getSessionID(),client_session);
+    //clientSessions.put(client_session.getSessionID(),client_session);
   }
   //Process the HTTP Post request
   @Override
@@ -632,7 +634,7 @@ public class Manager extends HttpServlet implements Interface,tools.Interface
   }
   //////////////////////////////////////////////////////////////////////////////
 }
-class ClientSession implements Interface,tools.Interface
+class ClientSession implements I
 {
   private Manager manager=null;
   private HttpServletRequest request=null;
@@ -664,7 +666,7 @@ class ClientSession implements Interface,tools.Interface
     //session_id
     sessionID=session_id;//session_id used in next functions(log)
     String request_codepage=request.getCharacterEncoding();//allways empty?
-    if(request_codepage==null||request_codepage.equals(EMPTY))request_codepage=REQUEST_CODEPAGE;
+    if(request_codepage==null||request_codepage.equals(C.EMPTY))request_codepage=REQUEST_CODEPAGE;
     //Manager.getLog().write("request_codepage="+request_codepage+"\r\n");
     String login=null,password=null,database_name=null,database_type=null,database_driver=null,name=null;
     String cookie_name=null,cookie_value=null,cookie_timeout=null;
@@ -693,14 +695,14 @@ class ClientSession implements Interface,tools.Interface
     //if(debug)System.out.println("->getRequestURL");
     sp.requestURL=request.getRequestURL().toString();
     //if(debug)System.out.println("->getQueryString");
-    sp.queryString=request.getQueryString();if(sp.queryString==null)sp.queryString=EMPTY;
+    sp.queryString=request.getQueryString();if(sp.queryString==null)sp.queryString=C.EMPTY;
     //start session
     //if(debug)System.out.println("<start session>");
     //Log.write(request.getLocalAddr()+" "+request.getLocalName()+" "+request.getRemoteAddr()+" "+request.getRemoteHost()+" "+request.getRemoteUser()+" "+request.getServerName());
     manager.getLog().write(session_id,INFO_SESSION_ACTIVATED,request.getMethod()+MESSAGE_DELIM_SUBVALUES+sp.requestURL+MESSAGE_DELIM_SUBVALUES+sp.queryString+
               MESSAGE_DELIM_SUBVALUES+request.getRemoteHost()+MESSAGE_DELIM_SUBVALUES+request.getRemoteAddr());
-    //(request.getContentType()!=null?MESSAGE_DELIM_SUBVALUES+request.getContentType():EMPTY)+
-    //(request.getContentLength()>0?MESSAGE_DELIM_SUBVALUES+request.getContentLength():EMPTY));
+    //(request.getContentType()!=null?MESSAGE_DELIM_SUBVALUES+request.getContentType():C.EMPTY)+
+    //(request.getContentLength()>0?MESSAGE_DELIM_SUBVALUES+request.getContentLength():C.EMPTY));
     //request.setCharacterEncoding(REQUEST_CODEPAGE);
     //response.setCharacterEncoding(localCodepage);
     //if(debug)System.out.println("->getRemoteAddr");
@@ -743,27 +745,27 @@ class ClientSession implements Interface,tools.Interface
       buf=this.readFromStream(request.getInputStream(),request.getContentLength());
       String str_buf=URLDecoder.decode(new String(buf),AJAX_CODEPAGE);//decode from ajax UTF-8
       String pa,va;
-      StringTokenizer st=new StringTokenizer(str_buf,AND);
+      StringTokenizer st=new StringTokenizer(str_buf,C.AND);
       while(st.hasMoreTokens()){//seek parts of request param in POST
         s=st.nextToken();
         pa=Convert.getParam(s);va=Convert.getValue(s);
-        if(pa.startsWith(SERVICE_LOGIN)||pa.startsWith(SERVICE_LOGIN_)){//name="login.."||"str1.."
-          login=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_LOGIN_/*str1*/+EQUAL+login;
+        if(pa.equals(SERVICE_LOGIN)||pa.equals(SERVICE_LOGIN_)){//name="login"||"str1"
+          login=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_LOGIN_/*str1*/+C.EQUAL+login;
         }
-        else if(pa.startsWith(SERVICE_PASSWORD)||pa.startsWith(SERVICE_PASSWORD_)){//name="password.."||"str2.."
-          password=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_PASSWORD_/*str2*/+EQUAL+password;
+        else if(pa.equals(SERVICE_PASSWORD)||pa.equals(SERVICE_PASSWORD_)){//name="password"||"str2"
+          password=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_PASSWORD_/*str2*/+C.EQUAL+password;
         }
-        else if(pa.startsWith(SERVICE_DATABASE)||pa.startsWith(SERVICE_DATABASE_)){//name="database.."||"str3.."
-          database_name=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_DATABASE_/*str3*/+EQUAL+database_name;
+        else if(pa.equals(SERVICE_DATABASE)||pa.equals(SERVICE_DATABASE_)){//name="database"||"str3"
+          database_name=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_DATABASE_/*str3*/+C.EQUAL+database_name;
         }
-        else if(pa.startsWith(SERVICE_TYPE)||pa.startsWith(SERVICE_TYPE_)){//name="type.."||"str4.."
-          database_type=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_TYPE_/*str4*/+EQUAL+database_type;
+        else if(pa.equals(SERVICE_TYPE)||pa.equals(SERVICE_TYPE_)){//name="type"||"str4"
+          database_type=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_TYPE_/*str4*/+C.EQUAL+database_type;
         }
-        else if(pa.startsWith(SERVICE_DRIVER)||pa.startsWith(SERVICE_DRIVER_)){//name="driver.."||"str5.."
-          database_driver=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_DRIVER_/*str5*/+EQUAL+database_driver;
+        else if(pa.equals(SERVICE_DRIVER)||pa.equals(SERVICE_DRIVER_)){//name="driver"||"str5"
+          database_driver=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_DRIVER_/*str5*/+C.EQUAL+database_driver;
         }
-        else if(pa.startsWith(SERVICE_NAME)||pa.startsWith(SERVICE_NAME_)){//name="name.."||"str0.."
-          name=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_NAME_/*str0*/+EQUAL+name;
+        else if(pa.equals(SERVICE_NAME)||pa.equals(SERVICE_NAME_)){//name="name"||"str0"
+          name=va;sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_NAME_/*str0*/+C.EQUAL+name;
         }
         else if(pa.startsWith(SERVICE_PARAM)&&isParamNumber(pa)){//name="param#"
           index=-1;
@@ -777,40 +779,41 @@ class ClientSession implements Interface,tools.Interface
             if(index>=sp.paramTypeList.size())sp.paramTypeList.setSize(index+1);
             sp.paramTypeList.setElementAt(SERVICE_PARAM_TYPE_STRING,index);
             size=va.length();
-            manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?size:EQUAL+va));
+            manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?C.EQUAL+va.substring(0,LENGTH_LOG_VALUE)+C.THRID_POINT:C.EQUAL+va));
+
           }
         }
-        else if(pa.equalsIgnoreCase(SERVICE_SQL)||pa.startsWith(SERVICE_SQL)){//name="sql"||"sql.."
+        else if(pa.equalsIgnoreCase(SERVICE_SQL)||pa.startsWith(SERVICE_SQL)){//name="SQL"||"sql.."
           s=va;
           sp.sqlList.add(s);
           size=va.length();
-          manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_SQL+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?size:EQUAL+va));
+          manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_SQL+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?C.EQUAL+va.substring(0,LENGTH_LOG_VALUE)+C.THRID_POINT:C.EQUAL+va));
         }
-        else if(pa.startsWith(SERVICE_COOKIE_NAME)){
+        else if(pa.equals(SERVICE_COOKIE_NAME)){
           cookie_name=va;
         }
-        else if(pa.startsWith(SERVICE_COOKIE_VALUE)){
+        else if(pa.equals(SERVICE_COOKIE_VALUE)){
           cookie_value=va;
         }
-        else if(pa.startsWith(SERVICE_COOKIE_TIMEOUT)){
+        else if(pa.equals(SERVICE_COOKIE_TIMEOUT)){
           cookie_timeout=va;
         }
-        else if(pa.startsWith(SERVICE_HIDE_COOKIE_NAME)){
+        else if(pa.equals(SERVICE_HIDE_COOKIE_NAME)){
           hide_cookie_name=va;
         }
-        else if(pa.startsWith(SERVICE_HIDE_COOKIE_VALUE)){
+        else if(pa.equals(SERVICE_HIDE_COOKIE_VALUE)){
           hide_cookie_value=va;
         }
-        else if(pa.startsWith(SERVICE_HIDE_COOKIE_TIMEOUT)){
+        else if(pa.equals(SERVICE_HIDE_COOKIE_TIMEOUT)){
           hide_cookie_timeout=va;
         }
-        else if(pa.startsWith(SERVICE_HIDE_COOKIE_KEYWORD)){
+        else if(pa.equals(SERVICE_HIDE_COOKIE_KEYWORD)){
           hide_cookie_keyword=va;
         }
         else{//save all other content data as extra
           sp.extraList.put(pa,va);
           size=va.length();
-          manager.getLog().write(session_id,INFO_SERVICE_CONTENT_REGISTERED,pa+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?size:EQUAL+va));
+          manager.getLog().write(session_id,INFO_SERVICE_CONTENT_REGISTERED,pa+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?C.EQUAL+va.substring(0,LENGTH_LOG_VALUE)+C.THRID_POINT:C.EQUAL+va));
         }
       }
       buf=null;
@@ -825,23 +828,23 @@ class ClientSession implements Interface,tools.Interface
         buf_param=(BufferParam)buf_list.get(i);
         if(buf_param!=null&&buf_param.name!=null){//registering param
           //always replace login,password,database_name,name on str1,str2,str3,str0
-          if(buf_param.name.startsWith(SERVICE_LOGIN)||buf_param.name.startsWith(SERVICE_LOGIN_)){//name="login.."||"str1.."
-            if(buf_param.data!=null){login=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_LOGIN_/*str1*/+EQUAL+login;}
+          if(buf_param.name.equals(SERVICE_LOGIN)||buf_param.name.equals(SERVICE_LOGIN_)){//name="login"||"str1"
+            if(buf_param.data!=null){login=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_LOGIN_/*str1*/+C.EQUAL+login;}
           }
-          else if(buf_param.name.startsWith(SERVICE_PASSWORD)||buf_param.name.startsWith(SERVICE_PASSWORD_)){//name="password.."||"str2.."
-            if(buf_param.data!=null){password=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_PASSWORD_/*str2*/+EQUAL+password;}
+          else if(buf_param.name.equals(SERVICE_PASSWORD)||buf_param.name.equals(SERVICE_PASSWORD_)){//name="password"||"str2"
+            if(buf_param.data!=null){password=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_PASSWORD_/*str2*/+C.EQUAL+password;}
           }
-          else if(buf_param.name.startsWith(SERVICE_DATABASE)||buf_param.name.startsWith(SERVICE_DATABASE_)){//name="database.."||"str3.."
-            if(buf_param.data!=null){database_name=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_DATABASE_/*str3*/+EQUAL+database_name;}
+          else if(buf_param.name.equals(SERVICE_DATABASE)||buf_param.name.equals(SERVICE_DATABASE_)){//name="database"||"str3"
+            if(buf_param.data!=null){database_name=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_DATABASE_/*str3*/+C.EQUAL+database_name;}
           }
-          else if(buf_param.name.startsWith(SERVICE_TYPE)||buf_param.name.startsWith(SERVICE_TYPE_)){//name="type.."||"str4.."
-            if(buf_param.data!=null){database_type=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_TYPE_/*str4*/+EQUAL+database_type;}
+          else if(buf_param.name.equals(SERVICE_TYPE)||buf_param.name.equals(SERVICE_TYPE_)){//name="type"||"str4"
+            if(buf_param.data!=null){database_type=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_TYPE_/*str4*/+C.EQUAL+database_type;}
           }
-          else if(buf_param.name.startsWith(SERVICE_DRIVER)||buf_param.name.startsWith(SERVICE_DRIVER_)){//name="type.."||"str5.."
-            if(buf_param.data!=null){database_driver=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_DRIVER_/*str5*/+EQUAL+database_driver;}
+          else if(buf_param.name.equals(SERVICE_DRIVER)||buf_param.name.equals(SERVICE_DRIVER_)){//name="type"||"str5"
+            if(buf_param.data!=null){database_driver=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_DRIVER_/*str5*/+C.EQUAL+database_driver;}
           }
-          else if(buf_param.name.startsWith(SERVICE_NAME)||buf_param.name.startsWith(SERVICE_NAME_)){//name="name.."||"str0.."
-            if(buf_param.data!=null){name=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_NAME_/*str0*/+EQUAL+name;}
+          else if(buf_param.name.equals(SERVICE_NAME)||buf_param.name.equals(SERVICE_NAME_)){//name="name"||"str0"
+            if(buf_param.data!=null){name=Convert.toString(buf_param.data);sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_NAME_/*str0*/+C.EQUAL+name;}
           }
           else if(buf_param.name.startsWith(SERVICE_PARAM)&&isParamNumber(buf_param.name)){//name="param#"
             index=-1;
@@ -870,8 +873,9 @@ class ClientSession implements Interface,tools.Interface
                 sp.paramList.setElementAt(s,index);
                 if(index>=sp.paramTypeList.size())sp.paramTypeList.setSize(index+1);
                 sp.paramTypeList.setElementAt(SERVICE_PARAM_TYPE_STRING,index);
-                sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:EMPTY)+SERVICE_PARAM+Convert.toString(index)+EQUAL+s;
-                manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+EQUAL+s);
+                sp.queryString+=(sp.queryString.length()>0?REQUEST_DELIM:C.EMPTY)+SERVICE_PARAM+Convert.toString(index)+C.EQUAL+s;
+                size=s.length();
+                manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+(size>LENGTH_LOG_VALUE?C.EQUAL+s.substring(0,LENGTH_LOG_VALUE)+C.THRID_POINT:C.EQUAL+s));
               }
             }
           }
@@ -882,8 +886,8 @@ class ClientSession implements Interface,tools.Interface
                 ind=buf_param.filename.lastIndexOf(LOCAL_DELIM);
                 if(ind==-1)ind=buf_param.filename.lastIndexOf(LOCAL_DELIM_2);
                 //remove filepath -> filename add session_id (session_id_Filename.ext)
-                if(ind!=-1)buf_param.filename=Convert.toString(session_id)+DOWN+buf_param.filename.substring(ind+1);
-                else buf_param.filename=Convert.toString(session_id)+DOWN+buf_param.filename;
+                if(ind!=-1)buf_param.filename=Convert.toString(session_id)+C.DOWN+buf_param.filename.substring(ind+1);
+                else buf_param.filename=Convert.toString(session_id)+C.DOWN+buf_param.filename;
                 s=manager.getInitial().getServiceFiles();//ini service files dir
                 if(s!=null&&!s.endsWith(LOCAL_DELIM_2))s+=LOCAL_DELIM_2;
                 String filepath=(s!=null?s:manager.getServletFilepath()+FILEPATH_SERVICE_FILES)+buf_param.filename;
@@ -902,36 +906,36 @@ class ClientSession implements Interface,tools.Interface
             }
           }
           //sql (insert,update or delete query before processing html...)
-          else if(buf_param.name.equalsIgnoreCase(SERVICE_SQL)||buf_param.name.startsWith(SERVICE_SQL)){//name="sql"||"sql.."
+          else if(buf_param.name.equalsIgnoreCase(SERVICE_SQL)||buf_param.name.startsWith(SERVICE_SQL)){//name="SQL"||"sql.."
             //sp.sql=Convert.toString(buf_param.data);
             s=Convert.toString(buf_param.data);
             sp.sqlList.add(s);
             manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_SQL+MESSAGE_DELIM_SUBVALUES+s);
           }
-          else if(buf_param.name.startsWith(SERVICE_COOKIE_NAME)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_COOKIE_NAME)&&buf_param.data!=null){
             cookie_name=Convert.toString(buf_param.data);
           }
-          else if(buf_param.name.startsWith(SERVICE_COOKIE_VALUE)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_COOKIE_VALUE)&&buf_param.data!=null){
             cookie_value=Convert.toString(buf_param.data);
           }
-          else if(buf_param.name.startsWith(SERVICE_COOKIE_TIMEOUT)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_COOKIE_TIMEOUT)&&buf_param.data!=null){
             cookie_timeout=Convert.toString(buf_param.data);
           }
-          else if(buf_param.name.startsWith(SERVICE_HIDE_COOKIE_NAME)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_HIDE_COOKIE_NAME)&&buf_param.data!=null){
             hide_cookie_name=Convert.toString(buf_param.data);
           }
-          else if(buf_param.name.startsWith(SERVICE_HIDE_COOKIE_VALUE)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_HIDE_COOKIE_VALUE)&&buf_param.data!=null){
             hide_cookie_value=Convert.toString(buf_param.data);
           }
-          else if(buf_param.name.startsWith(SERVICE_HIDE_COOKIE_TIMEOUT)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_HIDE_COOKIE_TIMEOUT)&&buf_param.data!=null){
             hide_cookie_timeout=Convert.toString(buf_param.data);
           }
-          else if(buf_param.name.startsWith(SERVICE_HIDE_COOKIE_KEYWORD)&&buf_param.data!=null){
+          else if(buf_param.name.equals(SERVICE_HIDE_COOKIE_KEYWORD)&&buf_param.data!=null){
             hide_cookie_keyword=Convert.toString(buf_param.data);
           }
           else{//save all other content data as extra
             sp.extraList.put(buf_param.name,buf_param.data);
-            manager.getLog().write(session_id,INFO_SERVICE_CONTENT_REGISTERED,buf_param.name+(buf_param.data!=null?MESSAGE_DELIM_SUBVALUES+buf_param.data.length:EMPTY)+MESSAGE_DELIM_SUBVALUES+buf_param.contentType);
+            manager.getLog().write(session_id,INFO_SERVICE_CONTENT_REGISTERED,buf_param.name+(buf_param.data!=null?MESSAGE_DELIM_SUBVALUES+buf_param.data.length:C.EMPTY)+MESSAGE_DELIM_SUBVALUES+buf_param.contentType);
           }
         }
       }
@@ -981,7 +985,8 @@ class ClientSession implements Interface,tools.Interface
             sp.paramList.setElementAt(s,index);
             if(index>=sp.paramTypeList.size())sp.paramTypeList.setSize(index+1);
             sp.paramTypeList.setElementAt(SERVICE_PARAM_TYPE_STRING,index);
-            manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+EQUAL+s);
+            size=s.length();
+            manager.getLog().write(session_id,INFO_SERVICE_PARAM_REGISTERED,SERVICE_PARAM+index+(size>LENGTH_LOG_VALUE?C.EQUAL+s.substring(0,LENGTH_LOG_VALUE)+C.THRID_POINT:C.EQUAL+s));
           }
         }
       }
@@ -1080,7 +1085,7 @@ class ClientSession implements Interface,tools.Interface
       name=request.getParameter(SERVICE_NAME);//name
       if(name==null)name=request.getParameter(SERVICE_NAME_);//str0
     }
-    if(name!=null)sp.name=name;else sp.name=EMPTY;
+    if(name!=null)sp.name=name;else sp.name=C.EMPTY;
     //(user) blacklist analize
     //if(debug)System.out.println("<user blacklist>");
     /*information -> user stay blocking if good password checking after bad!*/
@@ -1155,9 +1160,9 @@ class ClientSession implements Interface,tools.Interface
               int database_cookie_timeout=(manager.getDatabaseCookie()==-1?TIMEOUT_DATABASE_COOKIE:manager.getDatabaseCookie());
               if(System.currentTimeMillis()-l>database_cookie_timeout){//get from browser
                 cookie_failed=true;password=null;
-                manager.getLog().write(session_id,INFO_COOKIE_FAILED,login+OPEN+cookie_date.toString()+CLOSE);
+                manager.getLog().write(session_id,INFO_COOKIE_FAILED,login+C.OPEN+cookie_date.toString()+C.CLOSE);
               }
-              else manager.getLog().write(session_id,INFO_COOKIE_ESTABLISHED,login+OPEN+cookie_date.toString()+CLOSE);
+              else manager.getLog().write(session_id,INFO_COOKIE_ESTABLISHED,login+C.OPEN+cookie_date.toString()+C.CLOSE);
             }
           }
         }
@@ -1181,7 +1186,7 @@ class ClientSession implements Interface,tools.Interface
         //if(debug)System.out.println("->response.addCookie");
         response.addCookie(cookie);
         byte_stream.close();byte_stream=null;
-        manager.getLog().write(session_id,INFO_COOKIE_CREATED,login+OPEN+enc_data+CLOSE);
+        manager.getLog().write(session_id,INFO_COOKIE_CREATED,login+C.OPEN+enc_data+C.CLOSE);
       }catch(IOException io_e){}
     }//else
     //by database_name connecting ...
@@ -1229,8 +1234,8 @@ class ClientSession implements Interface,tools.Interface
             }
             int database_number=0;
             if(database_name==null||database_name.length()==0){
-              if(manager.getInitial().getDatabasePrimaryAddress()!=null&&manager.getInitial().getDatabasePrimaryAddress().length()>0){database_name=Convert.getValue(manager.getInitial().getDatabasePrimaryAddress(),DOG);database_number=1;}
-              else if(manager.getInitial().getDatabaseSecondaryAddress()!=null&&manager.getInitial().getDatabaseSecondaryAddress().length()>0){database_name=Convert.getValue(manager.getInitial().getDatabaseSecondaryAddress(),DOG);database_number=2;}
+              if(manager.getInitial().getDatabasePrimaryAddress()!=null&&manager.getInitial().getDatabasePrimaryAddress().length()>0){database_name=Convert.getValue(manager.getInitial().getDatabasePrimaryAddress(),C.DOG);database_number=1;}
+              else if(manager.getInitial().getDatabaseSecondaryAddress()!=null&&manager.getInitial().getDatabaseSecondaryAddress().length()>0){database_name=Convert.getValue(manager.getInitial().getDatabaseSecondaryAddress(),C.DOG);database_number=2;}
             }//if
             boolean save_session=false;
             connection=new DatabaseConnection();
@@ -1239,16 +1244,16 @@ class ClientSession implements Interface,tools.Interface
             if(connection.isOpened()){
               database=new Database(manager,connection);
               connected=true;save_session=true;
-              manager.getLog().write(session_id,INFO_DATABASE_CONNECTION_ESTABLISHED,connection.getConnectionAddress()+OPEN+login+CLOSE);
+              manager.getLog().write(session_id,INFO_DATABASE_CONNECTION_ESTABLISHED,connection.getConnectionAddress()+C.OPEN+login+C.CLOSE);
             }//if
             else if(database_number==1){//may be a second database address correct ...
-              if(manager.getInitial().getDatabaseSecondaryAddress()!=null&&manager.getInitial().getDatabaseSecondaryAddress().length()>0){database_name=Convert.getValue(manager.getInitial().getDatabaseSecondaryAddress(),DOG);database_number=2;}
+              if(manager.getInitial().getDatabaseSecondaryAddress()!=null&&manager.getInitial().getDatabaseSecondaryAddress().length()>0){database_name=Convert.getValue(manager.getInitial().getDatabaseSecondaryAddress(),C.DOG);database_number=2;}
               if(database_number==2){//second database address present
                 connection.open(manager,session_id,database_driver,database_type,database_name,login,password);
                 if(connection.isOpened()){
                   database=new Database(manager,connection);
                   connected=true;save_session=true;
-                  manager.getLog().write(session_id,INFO_DATABASE_CONNECTION_ESTABLISHED,connection.getConnectionAddress()+OPEN+login+CLOSE);
+                  manager.getLog().write(session_id,INFO_DATABASE_CONNECTION_ESTABLISHED,connection.getConnectionAddress()+C.OPEN+login+C.CLOSE);
                 }//if isOpened
                 else{connection=null;database=null;}//not opened
               }//if
@@ -1503,29 +1508,29 @@ class ClientSession implements Interface,tools.Interface
     if(buf!=null){
       BufferParam buf_param=null;
       byte[] content_buf=null;
-      String str=EMPTY,s;//temp
+      String str=C.EMPTY,s;//temp
       String content_type=null,content_disposition=null;
       String filename=null,name=null;
       String id=null;//content identifier
       int ind=0,index,index_begin,size;
       while(ind<buf.length){
-        if(buf[ind]==CODE_RETURN);//code 0x0D
-        else if(buf[ind]==CODE_NEXT){//code 0x0A
+        if(buf[ind]==C.CODE_RETURN);//code 0x0D
+        else if(buf[ind]==C.CODE_NEXT){//code 0x0A
           if(id==null)id=str;//content identifier (first string)
           else if(str.equals(id));//content delimiter
-          else if(str.startsWith(CONTENT_TYPE))content_type=Convert.getValue(str,DOUBLE_UP_POINT);//content type
+          else if(str.startsWith(CONTENT_TYPE))content_type=Convert.getValue(str,C.DOUBLE_UP_POINT);//content type
           else if(str.startsWith(CONTENT_DISPOSITION)){//content disposition
-            content_disposition=Convert.getValue(str,DOUBLE_UP_POINT);
+            content_disposition=Convert.getValue(str,C.DOUBLE_UP_POINT);
             Vector v=Convert.getValues(content_disposition);
             for(int i=0;i<v.size();i++){
               s=(String)v.get(i);
               if(s.startsWith(CONTENT_DISPOSITION_FILENAME)){//filename
                 filename=Convert.getValue(s);
-                filename=filename.replaceAll(DOUBLE_UPPER,EMPTY);//trim "
+                filename=filename.replaceAll(C.DOUBLE_UPPER,C.EMPTY);//trim "
               }
               if(s.startsWith(CONTENT_DISPOSITION_NAME)){//name
                 name=Convert.getValue(s);
-                name=name.replaceAll(DOUBLE_UPPER,EMPTY);//trim "
+                name=name.replaceAll(C.DOUBLE_UPPER,C.EMPTY);//trim "
               }
             }
           }
@@ -1555,7 +1560,7 @@ class ClientSession implements Interface,tools.Interface
             content_buf=null;
             ind=index+id.length();
           }
-          str=EMPTY;
+          str=C.EMPTY;
         }
         else str+=(char)buf[ind];//not work in russian context(need base64encode?)
         ind++;
@@ -1608,10 +1613,10 @@ class ClientSession implements Interface,tools.Interface
         http_connection.connect();
         length=http_connection.getContentLength();
         /*
-        String str="Url="+page_url+NEXT_LINE;
-        str+="ResponseCode="+http_connection.getResponseCode()+SPACE+http_connection.getResponseMessage()+NEXT_LINE;
-        str+="Header="+http_connection.getHeaderFields().values().toString()+NEXT_LINE;
-        str+="content="+http_connection.getContentType()+NEXT_LINE;
+        String str="Url="+page_url+C.NEXT_LINE;
+        str+="ResponseCode="+http_connection.getResponseCode()+C.SPACE+http_connection.getResponseMessage()+C.NEXT_LINE;
+        str+="Header="+http_connection.getHeaderFields().values().toString()+C.NEXT_LINE;
+        str+="content="+http_connection.getContentType()+C.NEXT_LINE;
         str+="Length="+length;
         if(debug)System.out.println("<"+str+">");
         */
@@ -1641,13 +1646,13 @@ class ClientSession implements Interface,tools.Interface
         http_connection.disconnect();http_connection=null;
         if(data_stream!=null){data_stream.close();data_stream=null;}
       }catch(IOException io_e){}
-    }catch(MalformedURLException mu_e){manager.getLog().write(session_id,ERROR_INVALID_REQUEST,page_url+SPACE+mu_e.toString());}
+    }catch(MalformedURLException mu_e){manager.getLog().write(session_id,ERROR_INVALID_REQUEST,page_url+C.SPACE+mu_e.toString());}
     return page;
   }
 }
 ////////////////////////////////////////////////////////////////////////////////
 //ServiceSession
-class Session extends Thread implements Interface
+class Session extends Thread implements I
 {
   private Manager manager=null;
   private int type=0;
@@ -1993,7 +1998,7 @@ abstract class UserConnection extends Thread
 //[tools classes]
 //--------------------------database connection-------------------------------//
 //database connection to ...
-class DatabaseConnection implements Interface,tools.Interface
+class DatabaseConnection implements I
 {
   //oracle.jdbc.driver.OracleDriver
   //jdbc:oracle:thin:@OEM-1547:1521:ORCL
@@ -2037,14 +2042,14 @@ class DatabaseConnection implements Interface,tools.Interface
       user=(String)manager.getDatabaseUsersList().get(i);
       if(user!=null&&user.length()>0){
         s1=null;s2=null;
-        i1=user.indexOf(DOUBLE_UP_POINT);
+        i1=user.indexOf(C.DOUBLE_UP_POINT);
         if(i1>0){
           s1=user.substring(0,i1).trim();
           if(user.length()-1>i1)s2=user.substring(i1+1).trim();
         }else s1=user;
         //Manager.getLog().write("is enigma user->"+username+" record->"+s1+"|"+s2+"\r\n");
         if(s1!=null&&s1.equalsIgnoreCase(username)){//instruction for this user
-          if(s2!=null&&s2.equalsIgnoreCase(ON))return ret_val=true;//enigma
+          if(s2!=null&&s2.equalsIgnoreCase(C.ON))return ret_val=true;//enigma
           else return ret_val=false;//no enigma
         }//if
       }//if
@@ -2146,7 +2151,7 @@ class DatabaseConnection implements Interface,tools.Interface
 }
 //--------------------------------database------------------------------------//
 //get and put data from database ...
-class Database implements Interface,tools.Interface
+class Database implements I
 {
   private Manager manager=null;
   private DatabaseConnection connection=null;
@@ -2164,7 +2169,7 @@ class Database implements Interface,tools.Interface
     this.connection=connection;
     differenceCodepage=this.manager.getSystemCodepage().equalsIgnoreCase(this.manager.getLocalCodepage())?false:true;
   }
-  private Vector getParamIndex(ServletParam sp)//array of param index (?0) (if index not found->EMPTY)
+  private Vector getParamIndex(ServletParam sp)//array of param index (?0) (if index not found->C.EMPTY)
   {
     Vector ret_val=new Vector();//return array of param index
     String str;
@@ -2174,7 +2179,7 @@ class Database implements Interface,tools.Interface
     else if(sp.sql.startsWith(SQL_INSERT)||sp.sql.startsWith(SQL_INSERT_UPPER_CASE))sql_type=2;
     else sql_type=0;
     //Warning not use empty text '' in SELECT '' FROM DUAL -> use blank space in SELECT ' ' FROM DUAL
-    StringTokenizer st=new StringTokenizer(sp.sql,UPPER);//seek parts of SELECT 'text', ...
+    StringTokenizer st=new StringTokenizer(sp.sql,C.UPPER);//seek parts of SELECT 'text', ...
     while(st.hasMoreTokens()){//seek parts of sql, empty parts lefts(such as '')!
       str=st.nextToken().trim();
       length=str.length();
@@ -2198,7 +2203,7 @@ class Database implements Interface,tools.Interface
           if(index<length){
             //[0..9]->(0x30..0x39)
             if(str.charAt(index)<0x30&&str.charAt(index)>0x39){//not number at position
-              ret_val.add(EMPTY);
+              ret_val.add(C.EMPTY);
             }//if
             else{//number after '?'
               last_index=index;
@@ -2209,7 +2214,7 @@ class Database implements Interface,tools.Interface
               index=last_index;
             }//else
           }//if index<length
-          else ret_val.add(EMPTY);
+          else ret_val.add(C.EMPTY);
           if(ret_index!=-1&&index>ret_index&&sp.returnParamIndex==-1){//return param into phrase
             for(int ind=ret_index+4/*left into*/;ind<index;ind++){//seek return param
               if(str.charAt(ind)=='?'){//return param
@@ -2238,7 +2243,7 @@ class Database implements Interface,tools.Interface
           str="?"+str;index=rep_sql.indexOf(str);
           if(index!=1){
             len=index+length;
-            rep_sql=rep_sql.substring(0,index+1)+(len+1<l?rep_sql.substring(len+1):EMPTY);
+            rep_sql=rep_sql.substring(0,index+1)+(len+1<l?rep_sql.substring(len+1):C.EMPTY);
           }
         }
       }
@@ -2266,7 +2271,7 @@ class Database implements Interface,tools.Interface
         prestmt=connection.getConnection().prepareStatement(sql);
         prestmt.clearParameters();
         for(int i=0;i<param_count;i++){
-          if(param_index.get(i).equals(EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
+          if(param_index.get(i).equals(C.EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
           else param=(String)sql_param.get(Convert.toIntValue((String)param_index.get(i)));
           prestmt.setString(i+1,param);
         }
@@ -2279,19 +2284,20 @@ class Database implements Interface,tools.Interface
       if(rset.next()){
         ret_val=rset.getString(1);
         if(ret_val!=null){
-          if(!htmlCode)ret_val=ret_val.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+          if(!htmlCode)ret_val=ret_val.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
           try{ret_val=new String(ret_val.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
         }
-        else ret_val=EMPTY;
+        else ret_val=C.EMPTY;
         /*record_count++;*/
       }
-      manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+MESSAGE_DELIM_SUBVALUES+EQUAL+ret_val);
+      int size=ret_val.length();
+      manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?C.EQUAL+ret_val.substring(0,LENGTH_LOG_VALUE)+C.THRID_POINT:C.EQUAL+ret_val));
     }catch(SQLException sql_e){
       manager.getLog().write(session_id,ERROR_SQL_QUERY_FAILED,sp.sql+MESSAGE_DELIM_SUBVALUES+sql_e.getErrorCode()+MESSAGE_DELIM_SUBVALUES+sql_e.getLocalizedMessage());
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(rset!=null)rset.close();rset=null;if(prestmt!=null)prestmt.close();prestmt=null;if(stmt!=null)stmt.close();stmt=null;}catch(SQLException sql_e){}
@@ -2319,7 +2325,7 @@ class Database implements Interface,tools.Interface
         prestmt=connection.getConnection().prepareStatement(sql);
         prestmt.clearParameters();
         for(int i=0;i<param_count;i++){
-          if(param_index.get(i).equals(EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
+          if(param_index.get(i).equals(C.EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
           else param=(String)sql_param.get(Convert.toIntValue((String)param_index.get(i)));
           prestmt.setString(i+1,param);
         }
@@ -2336,13 +2342,14 @@ class Database implements Interface,tools.Interface
         }
         /*record_count++;*/
       }
-      manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+(bytes_value!=null?MESSAGE_DELIM_SUBVALUES+EQUAL+bytes_value.length:EMPTY));
+      int size=(ret_val!=null?ret_val.length():0);
+      manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+(bytes_value!=null?MESSAGE_DELIM_SUBVALUES+(size>LENGTH_LOG_VALUE?C.EQUAL+(ret_val!=null?ret_val.substring(0,LENGTH_LOG_VALUE):C.EMPTY)+C.THRID_POINT:C.EQUAL+ret_val):C.EMPTY));
     }catch(SQLException sql_e){
       manager.getLog().write(session_id,ERROR_SQL_QUERY_FAILED,sp.sql+MESSAGE_DELIM_SUBVALUES+sql_e.getErrorCode()+MESSAGE_DELIM_SUBVALUES+sql_e.getLocalizedMessage());
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(rset!=null)rset.close();rset=null;if(prestmt!=null)prestmt.close();prestmt=null;if(stmt!=null)stmt.close();stmt=null;}catch(SQLException sql_e){}
@@ -2393,7 +2400,7 @@ class Database implements Interface,tools.Interface
         prestmt=connection.getConnection().prepareStatement(sql);
         prestmt.clearParameters();
         for(int i=0;i<param_count;i++){
-          if(param_index.get(i).equals(EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
+          if(param_index.get(i).equals(C.EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
           else param=(String)sql_param.get(Convert.toIntValue((String)param_index.get(i)));
           prestmt.setString(i+1,param);
         }
@@ -2419,13 +2426,13 @@ class Database implements Interface,tools.Interface
         }
         /*record_count++;*/
       }
-      manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+(bytes!=null?MESSAGE_DELIM_SUBVALUES+EQUAL+bytes.length:EMPTY));
+      manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+(bytes!=null?MESSAGE_DELIM_SUBVALUES+C.OPEN+bytes.length+C.CLOSE:C.EMPTY));
     }catch(SQLException sql_e){
       manager.getLog().write(session_id,ERROR_SQL_QUERY_FAILED,sp.sql+MESSAGE_DELIM_SUBVALUES+sql_e.getErrorCode()+MESSAGE_DELIM_SUBVALUES+sql_e.getLocalizedMessage());
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(rset!=null)rset.close();rset=null;if(prestmt!=null)prestmt.close();prestmt=null;if(stmt!=null)stmt.close();stmt=null;}catch(SQLException sql_e){}
@@ -2456,7 +2463,7 @@ class Database implements Interface,tools.Interface
         prestmt=connection.getConnection().prepareStatement(sql);
         prestmt.clearParameters();
         for(int i=0;i<param_count;i++){
-          if(param_index.get(i).equals(EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
+          if(param_index.get(i).equals(C.EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
           else param=(String)sql_param.get(Convert.toIntValue((String)param_index.get(i)));
           prestmt.setString(i+1,param);
         }
@@ -2474,17 +2481,17 @@ class Database implements Interface,tools.Interface
           if(col_count==3)item.value2=rset.getString(3);
         }
         if(item.id!=null){
-          if(!htmlCode)item.id=item.id.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+          if(!htmlCode)item.id=item.id.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
           try{item.id=new String(item.id.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-        }else item.id=EMPTY;
+        }else item.id=C.EMPTY;
         if(item.value!=null){
-          if(!htmlCode)item.value=item.value.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+          if(!htmlCode)item.value=item.value.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
           try{item.value=new String(item.value.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-        }else item.value=EMPTY;
+        }else item.value=C.EMPTY;
         if(item.value2!=null){
-          if(!htmlCode)item.value2=item.value2.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+          if(!htmlCode)item.value2=item.value2.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
           try{item.value2=new String(item.value2.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-        }else item.value2=EMPTY;
+        }else item.value2=C.EMPTY;
         ret_val.add(item);record_count++;
       }
       manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+MESSAGE_DELIM_SUBVALUES+record_count);
@@ -2493,7 +2500,7 @@ class Database implements Interface,tools.Interface
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(rset!=null)rset.close();rset=null;if(prestmt!=null)prestmt.close();prestmt=null;if(stmt!=null)stmt.close();stmt=null;}catch(SQLException sql_e){}
@@ -2522,7 +2529,7 @@ class Database implements Interface,tools.Interface
         prestmt=connection.getConnection().prepareStatement(sql);
         prestmt.clearParameters();
         for(int i=0;i<param_count;i++){
-          if(param_index.get(i).equals(EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
+          if(param_index.get(i).equals(C.EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
           else param=(String)sql_param.get(Convert.toIntValue((String)param_index.get(i)));
           prestmt.setString(i+1,param);
         }
@@ -2537,9 +2544,9 @@ class Database implements Interface,tools.Interface
         item.id=rset.getString(1);
         item.value=rset.getBytes(2);
         if(item.id!=null){
-          if(!htmlCode)item.id=item.id.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+          if(!htmlCode)item.id=item.id.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
           try{item.id=new String(item.id.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-        }else item.id=EMPTY;
+        }else item.id=C.EMPTY;
         ret_val.add(item);record_count++;
       }
       manager.getLog().write(session_id,INFO_READ_DATA,sp.sql+MESSAGE_DELIM_SUBVALUES+record_count);
@@ -2548,7 +2555,7 @@ class Database implements Interface,tools.Interface
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(rset!=null)rset.close();rset=null;if(prestmt!=null)prestmt.close();prestmt=null;if(stmt!=null)stmt.close();stmt=null;}catch(SQLException sql_e){}
@@ -2581,7 +2588,7 @@ class Database implements Interface,tools.Interface
         prestmt=connection.getConnection().prepareStatement(sql,ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY);
         prestmt.clearParameters();
         for(int i=0;i<param_count;i++){
-          if(param_index.get(i).equals(EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
+          if(param_index.get(i).equals(C.EMPTY)){param=(String)sql_param.get(sp.paramIndex);sp.paramIndex++;}
           else param=(String)sql_param.get(Convert.toIntValue((String)param_index.get(i)));
           prestmt.setString(i+1,param);
         }
@@ -2651,9 +2658,9 @@ class Database implements Interface,tools.Interface
           else{//get as string
             str=rset.getString(i+1);
             if(!rset.wasNull()){
-              if(!htmlCode)str=str.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+              if(!htmlCode)str=str.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
               try{str=new String(str.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-            }else str=EMPTY;
+            }else str=C.EMPTY;
             gdi=new GridDataItem();
             gdi.type=ITEM_TYPE_STRING;
             gdi.stringValue=str;
@@ -2670,7 +2677,7 @@ class Database implements Interface,tools.Interface
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(rset!=null)rset.close();rset=null;if(prestmt!=null)prestmt.close();prestmt=null;if(stmt!=null)stmt.close();stmt=null;}catch(SQLException sql_e){}
@@ -2766,7 +2773,7 @@ class Database implements Interface,tools.Interface
                 if(sql_insert_returning||sql_select_returning){//returning
                   if(return_param_index>-1&&return_param_index<sql_param.size()){
                     temp=rset.getString(1);
-                    if(!htmlCode)temp=temp.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+                    if(!htmlCode)temp=temp.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
                     try{temp=new String(temp.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
                     sp.paramList.setElementAt(temp,return_param_index);
                     sp.paramTypeList.setElementAt(SERVICE_PARAM_TYPE_STRING,return_param_index);
@@ -2777,10 +2784,10 @@ class Database implements Interface,tools.Interface
                   if(sp.sqlType==SQL_MESSAGE_TYPE||sp.sqlType==SQL_ERROR_MESSAGE_TYPE){//sql message page(wait for return data)
                     temp=rset.getString(1);
                     sp.sqlReturnType=SQL_MESSAGE_TYPE;//set message type
-                    if(!htmlCode)temp=temp.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+                    if(!htmlCode)temp=temp.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
                     try{temp=new String(temp.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
                     sp.sqlErrorMessage=temp;
-                    manager.getLog().write(session_id,INFO_SQL_MESSAGE,sp.sql+MESSAGE_DELIM_SUBVALUES+EQUAL+temp);
+                    manager.getLog().write(session_id,INFO_SQL_MESSAGE,sp.sql+MESSAGE_DELIM_SUBVALUES+C.EQUAL+temp);
                   }//if
                 }//else
               }
@@ -2818,7 +2825,7 @@ class Database implements Interface,tools.Interface
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }//catch
     finally{
       try{if(prestmt!=null)prestmt.close();prestmt=null;if(calstmt!=null)calstmt.close();calstmt=null;}catch(SQLException sql_e){}
@@ -2875,14 +2882,14 @@ class Database implements Interface,tools.Interface
         }catch(Exception e){/*manager.getLog().write("FAILED RETURN PARAM:"+e.toString()+"\r\n");*/}
         connection.getConnection().commit();
       }
-      if(ret_val!=null)manager.getLog().write(session_id,INFO_UPDATE_REQUEST,sp.sql+MESSAGE_DELIM_SUBVALUES+EQUAL+ret_val);
+      if(ret_val!=null)manager.getLog().write(session_id,INFO_UPDATE_REQUEST,sp.sql+MESSAGE_DELIM_SUBVALUES+C.EQUAL+ret_val);
       else manager.getLog().write(session_id,ERROR_INVALID_REQUEST,sp.sql);
     }catch(SQLException sql_e){
       manager.getLog().write(session_id,ERROR_SQL_QUERY_FAILED,sp.sql+MESSAGE_DELIM_SUBVALUES+sql_e.getErrorCode()+MESSAGE_DELIM_SUBVALUES+sql_e.getLocalizedMessage());
       sp.sqlReturnType=SQL_ERROR_TYPE;//set error type
       sp.sqlErrorMessage=sql_e.getLocalizedMessage();
       try{sp.sqlErrorMessage=new String(sp.sqlErrorMessage.getBytes(manager.getSystemCodepage()));}catch(UnsupportedEncodingException ue_e){}
-      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+      if(!htmlCode)sp.sqlErrorMessage=sp.sqlErrorMessage.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
     }
     finally{
       try{if(calstmt!=null)calstmt.close();calstmt=null;}catch(SQLException sql_e){}
@@ -2890,7 +2897,7 @@ class Database implements Interface,tools.Interface
     return ret_val;
   }
 }
-class LogDatabase implements Interface,tools.Interface
+class LogDatabase implements I
 {
   private DatabaseConnection connection=null;
   private String sqlQuery="INSERT INTO log(type,message) VALUES(?,?)";
@@ -3118,7 +3125,7 @@ class Tools
   }
 }
 //------------------------------invoke_method---------------------------------//
-class InvokeMethod implements tools.Interface
+class InvokeMethod
 {
   public Object start(String s)throws Exception//"class1.classN.method(args)"
   {
@@ -3131,7 +3138,7 @@ class InvokeMethod implements tools.Interface
     boolean text=false;
     if(start_index==-1)return ret_val;
     for(int i=start_index;i<size;i++){
-      if(str.charAt(i)==CODE_DOUBLE_UPPER){
+      if(str.charAt(i)==C.CODE_DOUBLE_UPPER){
         if(!text)text=true;else text=false;//text or no text
       }
       else if(str.charAt(i)==code){
@@ -3148,11 +3155,11 @@ class InvokeMethod implements tools.Interface
     if(start_index==-1)return ret_val;
     for(int i=start_index;i<size;i++){
       if(!text&&count==0&&str.charAt(i)==code){ret_val=i;break;}
-      else if(str.charAt(i)==CODE_DOUBLE_UPPER){
+      else if(str.charAt(i)==C.CODE_DOUBLE_UPPER){
         if(!text)text=true;else text=false;//text or no text
       }
-      else if(str.charAt(i)==CODE_OPEN_){if(!text)count++;}
-      else if(str.charAt(i)==CODE_CLOSE_){if(!text&&count>0)count--;}
+      else if(str.charAt(i)==C.CODE_OPEN_){if(!text)count++;}
+      else if(str.charAt(i)==C.CODE_CLOSE_){if(!text&&count>0)count--;}
     }
     return ret_val;
   }
@@ -3166,12 +3173,12 @@ class InvokeMethod implements tools.Interface
     boolean text=false;
     //Manager.getLog().write("args name="+args_name+" size="+size+"\r\n");
     for(int i=0;i<size;i++){
-      if(args_name.charAt(i)==CODE_DOUBLE_UPPER){
+      if(args_name.charAt(i)==C.CODE_DOUBLE_UPPER){
         if(!text)text=true;else text=false;//text or no text
       }
-      else if(args_name.charAt(i)==CODE_OPEN_){if(!text)count++;}
-      else if(args_name.charAt(i)==CODE_CLOSE_){if(!text&&count>0)count--;}
-      else if(args_name.charAt(i)==CODE_COMA){
+      else if(args_name.charAt(i)==C.CODE_OPEN_){if(!text)count++;}
+      else if(args_name.charAt(i)==C.CODE_CLOSE_){if(!text&&count>0)count--;}
+      else if(args_name.charAt(i)==C.CODE_COMA){
         if(!text&&count==0){ret_val.add(args_name.substring(index,i).trim());index=i+1;}
       }
     }
@@ -3189,14 +3196,14 @@ class InvokeMethod implements tools.Interface
     Object o_c;//Object of Class c;
     String class_name,method_name,args_name,str0=s.trim(),str1=str0,str2=null;
     int index1,index2,index3;
-    index2=str1.indexOf(CODE_OPEN_);
-    index3=this.getLastIndex(str1,CODE_CLOSE_,index2+1);
+    index2=str1.indexOf(C.CODE_OPEN_);
+    index3=this.getLastIndex(str1,C.CODE_CLOSE_,index2+1);
     if(index3+1<=str1.length()){
       str0=str1.substring(0,index2).trim();//string without ()
       str2=str1.substring(index3+1).trim();//string after ()
       str1=str1.substring(0,index3+1).trim();//string with ()
     }
-    index1=str0.lastIndexOf(CODE_POINT);
+    index1=str0.lastIndexOf(C.CODE_POINT);
     class_name=str1.substring(0,index1);
     c=Class.forName(class_name);
     o_c=c.newInstance();
@@ -3208,18 +3215,18 @@ class InvokeMethod implements tools.Interface
       c=o.getClass();
       o_c=o;
       str1=str2;
-      index2=str1.indexOf(CODE_OPEN_);
-      index3=this.getLastIndex(str1,CODE_CLOSE_,index2+1);
+      index2=str1.indexOf(C.CODE_OPEN_);
+      index3=this.getLastIndex(str1,C.CODE_CLOSE_,index2+1);
       str2=null;
-      if(index2==-1||index3==-1)return o==null?EMPTY:o;
+      if(index2==-1||index3==-1)return o==null?C.EMPTY:o;
       if(index3+1<=str1.length()){
         str0=str1.substring(0,index2).trim();//string without ()
         str2=str1.substring(index3+1).trim();//string after ()
         str1=str1.substring(0,index3+1).trim();//string with ()
       }
-      index1=str0.lastIndexOf(CODE_POINT);
+      index1=str0.lastIndexOf(C.CODE_POINT);
     }while(true);
-    return o==null?EMPTY:o;
+    return o==null?C.EMPTY:o;
   }
   private Object invoke(String args_name,String method_name,Class c,Object o)throws Exception
   {
@@ -3233,25 +3240,25 @@ class InvokeMethod implements tools.Interface
     arg_value=new Object[size];
     for(token_index=0;token_index<size;token_index++){
       token=(String)args.elementAt(token_index);
-      if(token.startsWith(DOUBLE_UPPER)){token=token.replaceAll(DOUBLE_UPPER,EMPTY);arg_type[token_index]=java.lang.String.class;arg_value[token_index]=token;}//String
-      else if(token.startsWith(UPPER)){token=token.replaceAll(UPPER,EMPTY);arg_type[token_index]=char.class;arg_value[token_index]=token.charAt(0);}//char
-      else if(token.equals(TRUE)||token.equals(FALSE)){arg_type[token_index]=boolean.class;arg_value[token_index]=java.lang.Boolean.parseBoolean(token);}//boolean
-      else if(token.indexOf(POINT)!=-1){
+      if(token.startsWith(C.DOUBLE_UPPER)){token=token.replaceAll(C.DOUBLE_UPPER,C.EMPTY);arg_type[token_index]=java.lang.String.class;arg_value[token_index]=token;}//String
+      else if(token.startsWith(C.UPPER)){token=token.replaceAll(C.UPPER,C.EMPTY);arg_type[token_index]=char.class;arg_value[token_index]=token.charAt(0);}//char
+      else if(token.equals(C.TRUE)||token.equals(C.FALSE)){arg_type[token_index]=boolean.class;arg_value[token_index]=java.lang.Boolean.parseBoolean(token);}//boolean
+      else if(token.indexOf(C.POINT)!=-1){
         Class object_class=null;
         index=-1;
-        if(token.startsWith(OPEN)){//object converter-> (java.lang.Object)...
-          index=this.getIndex(token,CODE_CLOSE_,1);
+        if(token.startsWith(C.OPEN)){//object converter-> (java.lang.Object)...
+          index=this.getIndex(token,C.CODE_CLOSE_,1);
           if(index!=-1){
             class_name=token.substring(1,index);//remove ( & )
             object_class=Class.forName(class_name);
           }
         }
         token=token.substring(index+1);
-        if(token.startsWith(DOUBLE_UPPER)){//string "..."
-          token=token.replaceAll(DOUBLE_UPPER,EMPTY);//remove " & "
+        if(token.startsWith(C.DOUBLE_UPPER)){//string "..."
+          token=token.replaceAll(C.DOUBLE_UPPER,C.EMPTY);//remove " & "
           arg_type[token_index]=object_class;arg_value[token_index]=token;//Object
         }
-        else if(token.indexOf(OPEN)!=-1){arg_type[token_index]=java.lang.Object.class;arg_value[token_index]=this.invoke_method(token);}//recursive call
+        else if(token.indexOf(C.OPEN)!=-1){arg_type[token_index]=java.lang.Object.class;arg_value[token_index]=this.invoke_method(token);}//recursive call
         else{arg_type[token_index]=float.class;arg_value[token_index]=java.lang.Float.parseFloat(token);}//float
       }
       else{arg_type[token_index]=int.class;arg_value[token_index]=java.lang.Integer.parseInt(token);}//int
@@ -3262,7 +3269,7 @@ class InvokeMethod implements tools.Interface
   }
 }
 //--------------------------------html parse----------------------------------//
-class PageParam implements Interface
+class PageParam implements I
 {
   int rowCount=-1;//rows count for page
   int pageType=0;//0->up 1->down 2->updown
@@ -3309,7 +3316,7 @@ file reads from disk or data from database as bytes(no need convert) and write t
 file reads from disk as chars in systemCodepage(convert to localCodepage->readCharArrayFromFile)
 data reads from database as strings in DatabaseCodepage(reads strings as systemCodepage)
 */
-class HtmlResponse extends HtmlParse implements Interface
+class HtmlResponse extends HtmlParse implements I
 {
   private long sessionID/*local session_id*/,bufferNumber=0;
   //private PrintWriter outWriter;//write string as platform system codepage /*NOT USED IN THIS VERSION*/
@@ -3355,7 +3362,7 @@ class HtmlResponse extends HtmlParse implements Interface
             byte[] filedata=Convert.readFromFile((str!=null?str:manager.getServletFilepath()+FILEPATH_SERVICE_TEMPLATES)+sp.sql);//sql query from file
             if(filedata!=null){
               str=Convert.toString(filedata);
-              str=str.replaceAll(NEXT_LINE,SPACE);
+              str=str.replaceAll(C.NEXT_LINE,C.SPACE);
               //error and message !-error(1) @-message(2) !@ or @!-error message(3)
               str=str.trim();
               if(str.startsWith(SQL_ERROR_MESSAGE)){sp.sqlType=SQL_ERROR_MESSAGE_TYPE;str=str.substring(2);}
@@ -3363,27 +3370,27 @@ class HtmlResponse extends HtmlParse implements Interface
               else if(str.startsWith(SQL_ERROR)){sp.sqlType=SQL_ERROR_TYPE;str=str.substring(1);}
               else if(str.startsWith(SQL_MESSAGE)){sp.sqlType=SQL_MESSAGE_TYPE;str=str.substring(1);}
               //param# substitutions by number (%param<number>%param)
-              while((percent_index=str.indexOf(Interface.PERCENT_PARAM))!=-1){//%param1%param
-                if((last_percent_index=str.indexOf(Interface.PERCENT_PARAM,percent_index+6))!=-1){
+              while((percent_index=str.indexOf(I.PERCENT_PARAM))!=-1){//%param1%param
+                if((last_percent_index=str.indexOf(I.PERCENT_PARAM,percent_index+6))!=-1){
                   String substr=(String)sp.paramList.get(Convert.toIntValue(str.substring(percent_index+6,last_percent_index).trim()));
                   str=str.substring(0,percent_index)+substr+str.substring(last_percent_index+6);
                 }
               }
               //remoteaddr substitutions
-              while((percent_index=str.indexOf(Interface.PERCENT_REMOTEADDR))!=-1){//%remoteaddr%remoteaddr
-                if((last_percent_index=str.indexOf(Interface.PERCENT_REMOTEADDR,percent_index+11))!=-1){
+              while((percent_index=str.indexOf(I.PERCENT_REMOTEADDR))!=-1){//%remoteaddr%remoteaddr
+                if((last_percent_index=str.indexOf(I.PERCENT_REMOTEADDR,percent_index+11))!=-1){
                   String substr=sp.remoteAddr;
                   str=str.substring(0,percent_index)+substr+str.substring(last_percent_index+11);
                 }
               }
               //remotehost substitutions
-              while((percent_index=str.indexOf(Interface.PERCENT_REMOTEHOST))!=-1){//%remotehost%remotehost
-                if((last_percent_index=str.indexOf(Interface.PERCENT_REMOTEHOST,percent_index+11))!=-1){
+              while((percent_index=str.indexOf(I.PERCENT_REMOTEHOST))!=-1){//%remotehost%remotehost
+                if((last_percent_index=str.indexOf(I.PERCENT_REMOTEHOST,percent_index+11))!=-1){
                   String substr=sp.remoteHost;
                   str=str.substring(0,percent_index)+substr+str.substring(last_percent_index+11);
                 }
               }
-              sp.sql=str.trim();str=EMPTY;//not # for sql query
+              sp.sql=str.trim();str=C.EMPTY;//not # for sql query
               //move executeSQL to here ... (for execution only sql files on server)
               database.executeSQL(sessionID,sp);
               //seek error or message found
@@ -3397,8 +3404,8 @@ class HtmlResponse extends HtmlParse implements Interface
                   if(sp.sqlReturnType==SQL_ERROR_TYPE){
                     service_page=service_page.replaceAll(PERCENT_SQL_ERROR+PERCENT_SQL_ERROR,sp.sqlErrorMessage);
                     do{//do all scrypts
-                      if((percent_index=service_page.indexOf(Interface.PERCENT_INVOKE_METHOD))!=-1){//%invoke_methodjava.lang.String.valueOf(1)%invoke_method
-                        if((last_percent_index=service_page.indexOf(Interface.PERCENT_INVOKE_METHOD,percent_index+14))!=-1){
+                      if((percent_index=service_page.indexOf(I.PERCENT_INVOKE_METHOD))!=-1){//%invoke_methodjava.lang.String.valueOf(1)%invoke_method
+                        if((last_percent_index=service_page.indexOf(I.PERCENT_INVOKE_METHOD,percent_index+14))!=-1){
                           service_page=service_page.substring(0,percent_index)+this.invoke_method(service_page.substring(percent_index+14,last_percent_index))+service_page.substring(last_percent_index+14);
                         }
                       }
@@ -3434,7 +3441,7 @@ class HtmlResponse extends HtmlParse implements Interface
     if(str!=null&&str.startsWith(REQUEST_HTTP)){
       if(!str.endsWith(LOCAL_DELIM))str+=LOCAL_DELIM;
       /*get file by url: data=manager.getPage(...)*/
-      byte[] page=clientSession.getPage(sessionID,str+sp.name+POINT+EXTENSION_FILE_HTML,1);
+      byte[] page=clientSession.getPage(sessionID,str+sp.name+C.POINT+EXTENSION_FILE_HTML,1);
       if(page!=null)data=new String(page,manager.getLocalCodepage()).toCharArray();
     }
     else{//read file in buffer->data
@@ -3442,10 +3449,10 @@ class HtmlResponse extends HtmlParse implements Interface
       /*other variant->get file by filesystem: data=Convert.readCharArrayFromFile(...)*/
       //use system codepage
       //data=Convert.readCharArrayFromFile((str!=null?str:manager.getServletFilepath()+(sp.service?FILEPATH_SERVICE_PAGES:FILEPATH_SERVICE_TEMPLATES))
-      //    +sp.name+POINT+EXTENSION_FILE_HTML);//not thread safe
+      //    +sp.name+C.POINT+EXTENSION_FILE_HTML);//not thread safe
       //use local codepage(good for Android UTF-8 file encoding)
       data=Convert.readCharArrayFromFile((str!=null?str:manager.getServletFilepath()+(sp.service?FILEPATH_SERVICE_PAGES:FILEPATH_SERVICE_TEMPLATES))
-          +sp.name+POINT+EXTENSION_FILE_HTML,manager.getLocalCodepage());//not thread safe
+          +sp.name+C.POINT+EXTENSION_FILE_HTML,manager.getLocalCodepage());//not thread safe
       //data=Convert.readByteArrayFromFile(...);//not thread safe
     }
     if(data==null){
@@ -3456,43 +3463,43 @@ class HtmlResponse extends HtmlParse implements Interface
       return;
     }
     manager.getLog().write(sessionID,INFO_SERVICE_REGISTERED,sp.name);
-    str=EMPTY;
+    str=C.EMPTY;
     data_left=new boolean[SIZE_DATA_LEFT_ARRAY];
     data_left[data_left_ind]=false;//allways false->data_left[0]
     while(index<data.length){
       //read char data
       data_ch=data[index];
       //scan char code
-      if(data_ch==CODE_PERCENT){percent=true;str+=data_ch;}//special scrypt can be found(%)
+      if(data_ch==C.CODE_PERCENT){percent=true;str+=data_ch;}//special scrypt can be found(%)
       // add comments as /**/ and "text in 'text'" and 'text'
-      else if(data_ch==CODE_DOUBLE_UPPER){//"text"
+      else if(data_ch==C.CODE_DOUBLE_UPPER){//"text"
         if(text_type==0)text_type=1;//text_type==0(no text)
         else if(text_type==1)text_type=0;//text_type==1(text with double_upper)
         str+=data_ch;//double upper write to str
       }//if "
-      else if(data_ch==CODE_UPPER){//'text'
+      else if(data_ch==C.CODE_UPPER){//'text'
         if(text_type==0)text_type=2;//text_type==0(no text)
         else if(text_type==2)text_type=0;//text_type==2(text with upper)
         str+=data_ch;
       }//if '
-      else if(data_ch==CODE_SLASH&&data[index+1]==CODE_STAR){//open comment
+      else if(data_ch==C.CODE_SLASH&&data[index+1]==C.CODE_STAR){//open comment
         if(text_type==0)text_type=3;
         str+=data_ch;str+=data[index+1];index++;
       }//if /*
-      else if(data_ch==CODE_STAR&&data[index+1]==CODE_SLASH){//close comment
+      else if(data_ch==C.CODE_STAR&&data[index+1]==C.CODE_SLASH){//close comment
         if(text_type==3)text_type=0;
         str+=data_ch;str+=data[index+1];index++;
       }//if */
       else if(text_type==0/*!text*/&&!data_left[data_left_ind]){//no text and no data left
         //scan char code
-        if(data_ch==CODE_OPEN){//'<'||'</'
+        if(data_ch==C.CODE_OPEN){//'<'||'</'
           is_tag=true;
-          if(data[index+1]==CODE_SLASH){status=2;++index;/*slash left*/}//'</'
+          if(data[index+1]==C.CODE_SLASH){status=2;++index;/*slash left*/}//'</'
           else status=1;//'<'
         }
-        else if(data_ch==CODE_CLOSE){is_tag=true;status=3;}//'>'
-        else if(data_ch==CODE_NEXT)str+=SPACE;//add space, data continue on next string
-        else if(data_ch==CODE_RETURN);//no action
+        else if(data_ch==C.CODE_CLOSE){is_tag=true;status=3;}//'>'
+        else if(data_ch==C.CODE_NEXT)str+=C.SPACE;//add space, data continue on next string
+        else if(data_ch==C.CODE_RETURN);//no action
         else str+=data_ch;//all others
       }//if !text && !data_left
       else if(text_type>0/*text*/||data_left[data_left_ind])str+=data_ch;//all others
@@ -3503,7 +3510,7 @@ class HtmlResponse extends HtmlParse implements Interface
       2.if no <data left> seek->functions (write data,file;set param,invoke method);
       3.set->substitutions and ->process_logic variable;
       */
-      if(percent/*str.contains(PERCENT)*/){
+      if(percent/*str.contains(C.PERCENT)*/){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /*if scrypt rule
         ...
@@ -3524,9 +3531,9 @@ class HtmlResponse extends HtmlParse implements Interface
         */
         //!SCRYPT!
         //if scrypt(%if<boolean>%if)
-        if((percent_index=str.indexOf(Interface.PERCENT_IF))!=-1){//%if...%if
-          if((last_percent_index=str.indexOf(Interface.PERCENT_IF,percent_index+3))!=-1){
-            String s=data_left[data_left_ind]?EMPTY:str.substring(0,percent_index);//prev data_left
+        if((percent_index=str.indexOf(I.PERCENT_IF))!=-1){//%if...%if
+          if((last_percent_index=str.indexOf(I.PERCENT_IF,percent_index+3))!=-1){
+            String s=data_left[data_left_ind]?C.EMPTY:str.substring(0,percent_index);//prev data_left
             if_level++;
             if(!data_left[data_left_ind]){
               String exp=str.substring(percent_index+3,last_percent_index).trim();//inner string %if_%if
@@ -3534,42 +3541,42 @@ class HtmlResponse extends HtmlParse implements Interface
               data_left[data_left_ind]=!if_scrypt(sessionID,sp,exp);//get data_left
             }
             //Manager.getLog().write("/////////IF//////////if_level="+if_level+" data_left_ind="+data_left_ind+"("+str+")"+" prev="+s+"\r\n");
-            if(!htmlCode){if(status==1){outStream.write(CODE_OPEN);status=0;}last_status=0;/*allways is_tag=false;*/}
+            if(!htmlCode){if(status==1){outStream.write(C.CODE_OPEN);status=0;}last_status=0;/*allways is_tag=false;*/}
             outStream.write(s.trim().getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;
+            str=C.EMPTY;percent=false;
           }
         }
         //elseif scrypt(%elseif%elseif)
-        else if((percent_index=str.indexOf(Interface.PERCENT_ELSEIF))!=-1){//%elseif%elseif
-          if((last_percent_index=str.indexOf(Interface.PERCENT_ELSEIF,percent_index+7))!=-1){
-            String s=data_left[data_left_ind]?EMPTY:str.substring(0,percent_index);//prev data_left
+        else if((percent_index=str.indexOf(I.PERCENT_ELSEIF))!=-1){//%elseif%elseif
+          if((last_percent_index=str.indexOf(I.PERCENT_ELSEIF,percent_index+7))!=-1){
+            String s=data_left[data_left_ind]?C.EMPTY:str.substring(0,percent_index);//prev data_left
             if(if_level==data_left_ind){
               data_left[data_left_ind]=!data_left[data_left_ind];//reverse value
             }
             //Manager.getLog().write("/////////IFELSE//////if_level="+if_level+" data_left_ind="+data_left_ind+" prev="+s+"\r\n");
-            if(!htmlCode){if(status==1){outStream.write(CODE_OPEN);status=0;}last_status=0;/*allways is_tag=false;*/}
+            if(!htmlCode){if(status==1){outStream.write(C.CODE_OPEN);status=0;}last_status=0;/*allways is_tag=false;*/}
             outStream.write(s.trim().getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;
+            str=C.EMPTY;percent=false;
           }
         }
         //endif scrypt(%endif%endif)
-        else if((percent_index=str.indexOf(Interface.PERCENT_ENDIF))!=-1){//%endif%endif
-          if((last_percent_index=str.indexOf(Interface.PERCENT_ENDIF,percent_index+6))!=-1){
-            String s=data_left[data_left_ind]?EMPTY:str.substring(0,percent_index);//prev data_left
+        else if((percent_index=str.indexOf(I.PERCENT_ENDIF))!=-1){//%endif%endif
+          if((last_percent_index=str.indexOf(I.PERCENT_ENDIF,percent_index+6))!=-1){
+            String s=data_left[data_left_ind]?C.EMPTY:str.substring(0,percent_index);//prev data_left
             if(if_level==data_left_ind&&data_left_ind>0)data_left_ind--;//%if_%if ends
             if(if_level>0)if_level--;
             //Manager.getLog().write("/////////ENDIF///////if_level="+if_level+" data_left_ind="+data_left_ind+" prev="+s+"\r\n");
-            if(!htmlCode){if(status==1){outStream.write(CODE_OPEN);status=0;}last_status=0;/*allways is_tag=false;*/}
+            if(!htmlCode){if(status==1){outStream.write(C.CODE_OPEN);status=0;}last_status=0;/*allways is_tag=false;*/}
             outStream.write(s.trim().getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;
+            str=C.EMPTY;percent=false;
           }
         }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if(!data_left[data_left_ind]){//no data left (and macros too ...)
           //!FUNCTION!
           //write file by filename (%writefile<header.html>%writefile)
-          if((percent_index=str.indexOf(Interface.PERCENT_WRITEFILE))!=-1){//%writefileheader.html%writefile
-            if((last_percent_index=str.indexOf(Interface.PERCENT_WRITEFILE,percent_index+10))!=-1){
+          if((percent_index=str.indexOf(I.PERCENT_WRITEFILE))!=-1){//%writefileheader.html%writefile
+            if((last_percent_index=str.indexOf(I.PERCENT_WRITEFILE,percent_index+10))!=-1){
               String filename=str.substring(percent_index+10,last_percent_index).trim(),filepath=manager.getInitial().getServiceTemplates();//ini service templates dir
               byte[] filedata;
               if(filename.startsWith(REQUEST_HTTP)){/*http path to file(from filename)*/
@@ -3582,27 +3589,27 @@ class HtmlResponse extends HtmlParse implements Interface
                 filedata=Convert.readFromFile((filepath!=null?filepath:manager.getServletFilepath()+FILEPATH_SERVICE_TEMPLATES)+filename);//not thread safe
               }
               str=str.substring(0,percent_index)+str.substring(last_percent_index+10);//move ^
-              outStream.write(str.getBytes(manager.getLocalCodepage()));str=EMPTY;//write first str(not write in early ver.)
+              outStream.write(str.getBytes(manager.getLocalCodepage()));str=C.EMPTY;//write first str(not write in early ver.)
               if(filedata!=null){outStream.write(filedata);filedata=null;}//and filedata second
               else manager.getLog().write(sessionID,ERROR_SERVICE_NOT_FOUND,filename);
               percent=false;
             }
           }
           //write data as writeData(...) (%writedata<menu>%writedata)
-          else if((percent_index=str.indexOf(Interface.PERCENT_WRITEDATA))!=-1){//%writedatamenu%writedata
-            if((last_percent_index=str.indexOf(Interface.PERCENT_WRITEDATA,percent_index+10))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_WRITEDATA))!=-1){//%writedatamenu%writedata
+            if((last_percent_index=str.indexOf(I.PERCENT_WRITEDATA,percent_index+10))!=-1){
               String name=sp.name;
               sp.name=str.substring(percent_index+10,last_percent_index).trim();
               str=str.substring(0,percent_index)+str.substring(last_percent_index+10);//move ^
-              outStream.write(str.getBytes(manager.getLocalCodepage()));str=EMPTY;//write first str(not write in early ver.)
+              outStream.write(str.getBytes(manager.getLocalCodepage()));str=C.EMPTY;//write first str(not write in early ver.)
               this.writeData(sp);//and data second
               sp.name=name;
               percent=false;
             }
           }
           //set param(%set_param#_%set_param)
-          else if((percent_index=str.indexOf(Interface.PERCENT_SET_PARAM))!=-1){//%set_param#_%set_param
-            if((last_percent_index=str.indexOf(Interface.PERCENT_SET_PARAM,percent_index+10))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_SET_PARAM))!=-1){//%set_param#_%set_param
+            if((last_percent_index=str.indexOf(I.PERCENT_SET_PARAM,percent_index+10))!=-1){
               String s;//execution->(java method as invoke_method or sql query)
               char ch;
               int i,j,str_size=str.length(),param_num;
@@ -3613,11 +3620,11 @@ class HtmlResponse extends HtmlParse implements Interface
               param_num=Convert.toIntValue(str.substring(percent_index+10,i).trim());
               for(;i<str_size;i++){//left from left '=' and ' ' and '"'
                 ch=str.charAt(i);
-                if(ch!=CODE_EQUAL&&ch!=CODE_EMPTY&&ch!=CODE_DOUBLE_UPPER)break;//not in [3D,20,"]->'=',' ','"'
+                if(ch!=C.CODE_EQUAL&&ch!=C.CODE_EMPTY&&ch!=C.CODE_DOUBLE_UPPER)break;//not in [3D,20,"]->'=',' ','"'
               }
               for(j=last_percent_index;j>0;j--){//left from right ' ' and '"'
                 ch=str.charAt(j-1);
-                if(ch!=CODE_EMPTY&&ch!=CODE_DOUBLE_UPPER)break;//not in [20,"]
+                if(ch!=C.CODE_EMPTY&&ch!=C.CODE_DOUBLE_UPPER)break;//not in [20,"]
               }
               s=str.substring(i,j);
               //s=this.paramSubst(s);//param# substitutions in string (%param<number>%param)
@@ -3638,8 +3645,8 @@ class HtmlResponse extends HtmlParse implements Interface
             }
           }
           //invoke method(%invoke_method<java class method>%invoke_method)
-          else if((percent_index=str.indexOf(Interface.PERCENT_INVOKE_METHOD))!=-1){//%invoke_methodjava.lang.String.valueOf(1)%invoke_method
-            if((last_percent_index=str.indexOf(Interface.PERCENT_INVOKE_METHOD,percent_index+14))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_INVOKE_METHOD))!=-1){//%invoke_methodjava.lang.String.valueOf(1)%invoke_method
+            if((last_percent_index=str.indexOf(I.PERCENT_INVOKE_METHOD,percent_index+14))!=-1){
               //s=str.substring(percent_index+14,last_percent_index);s=this.paramSubst(s);//param# substitutions in string (%param<number>%param)
               str=str.substring(0,percent_index)+this.invoke_method(str.substring(percent_index+14,last_percent_index))+str.substring(last_percent_index+14);
               percent=false;
@@ -3647,74 +3654,74 @@ class HtmlResponse extends HtmlParse implements Interface
           }
           //!SUBSTITUTIONS!
           //param# substitutions by number (%param<number>%param)
-          if((percent_index=str.indexOf(Interface.PERCENT_PARAM))!=-1){//%param1%param
-            if((last_percent_index=str.indexOf(Interface.PERCENT_PARAM,percent_index+6))!=-1){
+          if((percent_index=str.indexOf(I.PERCENT_PARAM))!=-1){//%param1%param
+            if((last_percent_index=str.indexOf(I.PERCENT_PARAM,percent_index+6))!=-1){
               String substr=(String)sp.paramList.get(Convert.toIntValue(str.substring(percent_index+6,last_percent_index).trim()));
               if(param_encode){if(!is_encoded(substr))substr=URLEncoder.encode(substr);}//URL encode
-              else if(param_quot)substr=substr.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+              else if(param_quot)substr=substr.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
               str=str.substring(0,percent_index)+substr+str.substring(last_percent_index+6);
               percent=false;
             }
           }
           //name substitutions (%name%name)
-          else if((percent_index=str.indexOf(Interface.PERCENT_NAME))!=-1){//%name%name
-            if((last_percent_index=str.indexOf(Interface.PERCENT_NAME,percent_index+5))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_NAME))!=-1){//%name%name
+            if((last_percent_index=str.indexOf(I.PERCENT_NAME,percent_index+5))!=-1){
               str=str.substring(0,percent_index)+LOCAL_NAME+str.substring(last_percent_index+5);
               percent=false;
             }
           }
           //version substitutions (%version%version)
-          else if((percent_index=str.indexOf(Interface.PERCENT_VERSION))!=-1){//%version%version
-            if((last_percent_index=str.indexOf(Interface.PERCENT_VERSION,percent_index+8))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_VERSION))!=-1){//%version%version
+            if((last_percent_index=str.indexOf(I.PERCENT_VERSION,percent_index+8))!=-1){
               str=str.substring(0,percent_index)+LOCAL_VERSION+str.substring(last_percent_index+8);
               percent=false;
             }
           }
           //login substitutions (%login%login)
-          else if((percent_index=str.indexOf(Interface.PERCENT_LOGIN))!=-1){//%login%login
-            if((last_percent_index=str.indexOf(Interface.PERCENT_LOGIN,percent_index+6))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_LOGIN))!=-1){//%login%login
+            if((last_percent_index=str.indexOf(I.PERCENT_LOGIN,percent_index+6))!=-1){
               str=str.substring(0,percent_index)+sp.login+str.substring(last_percent_index+6);
               percent=false;
             }
           }
           //password substitutions (%password%password)
-          else if((percent_index=str.indexOf(Interface.PERCENT_PASSWORD))!=-1){//%password%password
-            if((last_percent_index=str.indexOf(Interface.PERCENT_PASSWORD,percent_index+9))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_PASSWORD))!=-1){//%password%password
+            if((last_percent_index=str.indexOf(I.PERCENT_PASSWORD,percent_index+9))!=-1){
               str=str.substring(0,percent_index)+sp.password+str.substring(last_percent_index+9);
               percent=false;
             }
           }
           //database substitutions (%database%database)
-          else if((percent_index=str.indexOf(Interface.PERCENT_DATABASE))!=-1){//%database%database
-            if((last_percent_index=str.indexOf(Interface.PERCENT_DATABASE,percent_index+9))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_DATABASE))!=-1){//%database%database
+            if((last_percent_index=str.indexOf(I.PERCENT_DATABASE,percent_index+9))!=-1){
               str=str.substring(0,percent_index)+sp.database+str.substring(last_percent_index+9);
               percent=false;
             }
           }
           //remoteaddr substitutions (%remoteaddr%remoteaddr)
-          else if((percent_index=str.indexOf(Interface.PERCENT_REMOTEADDR))!=-1){//%remoteaddr%remoteaddr
-            if((last_percent_index=str.indexOf(Interface.PERCENT_REMOTEADDR,percent_index+11))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_REMOTEADDR))!=-1){//%remoteaddr%remoteaddr
+            if((last_percent_index=str.indexOf(I.PERCENT_REMOTEADDR,percent_index+11))!=-1){
               str=str.substring(0,percent_index)+sp.remoteAddr+str.substring(last_percent_index+11);
               percent=false;
             }
           }
           //remotehost substitutions (%remotehost%remotehost)
-          else if((percent_index=str.indexOf(Interface.PERCENT_REMOTEHOST))!=-1){//%remotehost%remotehost
-            if((last_percent_index=str.indexOf(Interface.PERCENT_REMOTEHOST,percent_index+11))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_REMOTEHOST))!=-1){//%remotehost%remotehost
+            if((last_percent_index=str.indexOf(I.PERCENT_REMOTEHOST,percent_index+11))!=-1){
               str=str.substring(0,percent_index)+sp.remoteHost+str.substring(last_percent_index+11);
               percent=false;
             }
           }
           //sessionid substitutions (%sessionid%sessionid)
-          else if((percent_index=str.indexOf(Interface.PERCENT_SESSIONID))!=-1){//%sessionid%sessionid
-            if((last_percent_index=str.indexOf(Interface.PERCENT_SESSIONID,percent_index+10))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_SESSIONID))!=-1){//%sessionid%sessionid
+            if((last_percent_index=str.indexOf(I.PERCENT_SESSIONID,percent_index+10))!=-1){
               str=str.substring(0,percent_index)+sessionID+str.substring(last_percent_index+10);
               percent=false;
             }
           }
           //servicetrash substitutions (%servicetrash%servicetrash)
-          else if((percent_index=str.indexOf(Interface.PERCENT_SERVICETRASH))!=-1){//%servicetrash%servicetrash
-            if((last_percent_index=str.indexOf(Interface.PERCENT_SERVICETRASH,percent_index+13))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_SERVICETRASH))!=-1){//%servicetrash%servicetrash
+            if((last_percent_index=str.indexOf(I.PERCENT_SERVICETRASH,percent_index+13))!=-1){
               String st=manager.getInitial().getServiceTrash();//ini service trash dir
               if(st!=null&&!st.endsWith(LOCAL_DELIM_2))st+=LOCAL_DELIM_2;
               st=(st!=null)?clientSession.toURL(st):URL_SERVICE_TRASH;
@@ -3725,78 +3732,78 @@ class HtmlResponse extends HtmlParse implements Interface
           //!PROCESS LOGIC!
           /*
           //param begin replace (%begin_replace%begin_replace) for database.sql->invoke this.replaceMecro()
-          else if((percent_index=str.indexOf(Interface.PERCENT_BEGIN_REPLACE))!=-1){//%begin_replace%begin_replace
-            if((last_percent_index=str.indexOf(Interface.PERCENT_BEGIN_REPLACE,percent_index+13))!=-1){
+          else if((percent_index=str.indexOf(C.PERCENT_BEGIN_REPLACE))!=-1){//%begin_replace%begin_replace
+            if((last_percent_index=str.indexOf(C.PERCENT_BEGIN_REPLACE,percent_index+13))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+13);
               param_replace=true;database.setReplace(param_replace);percent=false;
             }
           }
           //param end replace (%end_replace%end_replace)
-          else if((percent_index=str.indexOf(Interface.PERCENT_END_REPLACE))!=-1){//%end_replace%end_replace
-            if((last_percent_index=str.indexOf(Interface.PERCENT_END_REPLACE,percent_index+11))!=-1){
+          else if((percent_index=str.indexOf(C.PERCENT_END_REPLACE))!=-1){//%end_replace%end_replace
+            if((last_percent_index=str.indexOf(C.PERCENT_END_REPLACE,percent_index+11))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+11);
               param_replace=false;database.setReplace(param_replace);percent=false;
             }
           }*/
           //param begin encode (%begin_encode%begin_encode)
-          else if((percent_index=str.indexOf(Interface.PERCENT_BEGIN_ENCODE))!=-1){//%begin_encode%begin_encode
-            if((last_percent_index=str.indexOf(Interface.PERCENT_BEGIN_ENCODE,percent_index+13))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_BEGIN_ENCODE))!=-1){//%begin_encode%begin_encode
+            if((last_percent_index=str.indexOf(I.PERCENT_BEGIN_ENCODE,percent_index+13))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+13);
               param_encode=true;percent=false;
             }
           }
           //param end encode (%end_encode%end_encode)
-          else if((percent_index=str.indexOf(Interface.PERCENT_END_ENCODE))!=-1){//%end_encode%end_encode
-            if((last_percent_index=str.indexOf(Interface.PERCENT_END_ENCODE,percent_index+11))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_END_ENCODE))!=-1){//%end_encode%end_encode
+            if((last_percent_index=str.indexOf(I.PERCENT_END_ENCODE,percent_index+11))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+11);
               param_encode=false;percent=false;
             }
           }
           //param begin quot (%begin_quot%begin_quot)
-          else if((percent_index=str.indexOf(Interface.PERCENT_BEGIN_QUOT))!=-1){//%begin_quot%begin_quot
-            if((last_percent_index=str.indexOf(Interface.PERCENT_BEGIN_QUOT,percent_index+11))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_BEGIN_QUOT))!=-1){//%begin_quot%begin_quot
+            if((last_percent_index=str.indexOf(I.PERCENT_BEGIN_QUOT,percent_index+11))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+11);
               param_quot=true;percent=false;
             }
           }
           //param end quot (%end_quot%end_quot)
-          else if((percent_index=str.indexOf(Interface.PERCENT_END_QUOT))!=-1){//%end_quot%end_quot
-            if((last_percent_index=str.indexOf(Interface.PERCENT_END_QUOT,percent_index+9))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_END_QUOT))!=-1){//%end_quot%end_quot
+            if((last_percent_index=str.indexOf(I.PERCENT_END_QUOT,percent_index+9))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+9);
               param_quot=false;percent=false;
             }
           }
           //param begin html (%begin_html%begin_html)
-          else if((percent_index=str.indexOf(Interface.PERCENT_BEGIN_HTML))!=-1){//%begin_html%begin_html
-            if((last_percent_index=str.indexOf(Interface.PERCENT_BEGIN_HTML,percent_index+11))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_BEGIN_HTML))!=-1){//%begin_html%begin_html
+            if((last_percent_index=str.indexOf(I.PERCENT_BEGIN_HTML,percent_index+11))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+11);
               param_html=true;database.setHtmlCode(param_html);percent=false;
             }
           }
           //param end html (%end_html%end_html)
-          else if((percent_index=str.indexOf(Interface.PERCENT_END_HTML))!=-1){//%end_html%end_html
-            if((last_percent_index=str.indexOf(Interface.PERCENT_END_HTML,percent_index+9))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_END_HTML))!=-1){//%end_html%end_html
+            if((last_percent_index=str.indexOf(I.PERCENT_END_HTML,percent_index+9))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+9);
               param_html=false;database.setHtmlCode(param_html);percent=false;
             }
           }
           //param begin not quot (%begin_not_quot%begin_not_quot)
-          else if((percent_index=str.indexOf(Interface.PERCENT_BEGIN_NOT_QUOT))!=-1){//%begin_not_quot%begin_not_quot
-            if((last_percent_index=str.indexOf(Interface.PERCENT_BEGIN_NOT_QUOT,percent_index+15))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_BEGIN_NOT_QUOT))!=-1){//%begin_not_quot%begin_not_quot
+            if((last_percent_index=str.indexOf(I.PERCENT_BEGIN_NOT_QUOT,percent_index+15))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+15);
               param_not_quot=true;percent=false;
             }
           }
           //param end not quot (%end_not_quot%end_not_quot)
-          else if((percent_index=str.indexOf(Interface.PERCENT_END_NOT_QUOT))!=-1){//%end_not_quot%end_not_quot
-            if((last_percent_index=str.indexOf(Interface.PERCENT_END_NOT_QUOT,percent_index+13))!=-1){
+          else if((percent_index=str.indexOf(I.PERCENT_END_NOT_QUOT))!=-1){//%end_not_quot%end_not_quot
+            if((last_percent_index=str.indexOf(I.PERCENT_END_NOT_QUOT,percent_index+13))!=-1){
               str=str.substring(0,percent_index)+str.substring(last_percent_index+13);
               param_not_quot=false;percent=false;
             }
           }
         }//if !data_left
       }//if PERCENT
-      else if(data_left[data_left_ind]){str=EMPTY;percent=false;}
+      else if(data_left[data_left_ind]){str=C.EMPTY;percent=false;}
       //---macro substitutions--- (%%)
       if(is_tag/*last_status!=status*/){//is_tag|status change
         str=str.trim();
@@ -3804,26 +3811,26 @@ class HtmlResponse extends HtmlParse implements Interface
         switch(last_status){
         case 0://data before first <...
           outStream.write(str.getBytes(manager.getLocalCodepage()));//->local codepage
-          if(status==3)outStream.write(CODE_CLOSE);//...> abnormal(may be script)
-          str=EMPTY;percent=false;break;
+          if(status==3)outStream.write(C.CODE_CLOSE);//...> abnormal(may be script)
+          str=C.EMPTY;percent=false;break;
         case 1://open <...
           switch(status){
           case 1://data between <...<
           case 2://data between <...</
-            outStream.write((CODE_OPEN+str).getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;break;
+            outStream.write((C.CODE_OPEN+str).getBytes(manager.getLocalCodepage()));//->local codepage
+            str=C.EMPTY;percent=false;break;
           case 3://data between <...>
             if(!comment){
-            if(str.startsWith(HTML_ELEMENT_SCRIPT)){//if <script ...>
-              outStream.write((CODE_OPEN+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+            if(str.startsWith(H.HTML_ELEMENT_SCRIPT)){//if <script ...>
+              outStream.write((C.CODE_OPEN+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
               htmlCode=false;
-              str=EMPTY;percent=false;
+              str=C.EMPTY;percent=false;
             }
             else if(htmlCode){//if htmlCode
-            if(str.startsWith(HTML_ELEMENT_COMMENT_START)){//comment==false
-              outStream.write((CODE_OPEN+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
-              if(!str.endsWith(HTML_ELEMENT_COMMENT_FINISH))comment=true;
-              str=EMPTY;percent=false;
+            if(str.startsWith(H.HTML_ELEMENT_COMMENT_START)){//comment==false
+              outStream.write((C.CODE_OPEN+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+              if(!str.endsWith(H.HTML_ELEMENT_COMMENT_FINISH))comment=true;
+              str=C.EMPTY;percent=false;
             }
             else{
             //process data, sql can found
@@ -3837,34 +3844,34 @@ class HtmlResponse extends HtmlParse implements Interface
               //file=database.getStringValue(sessionID,sp);//only one value got(but may be a list?)
               StringListItem item;
               Vector list=database.getStringList(sessionID,sp,1);
-              file=EMPTY;
+              file=C.EMPTY;
               for(int i=0;i<list.size();i++){
                 item=(StringListItem)list.elementAt(i);
-                file+=item.id+POINT_COMA;//list by point-coma: filename1;filename2; ... filenameN;
+                file+=item.id+C.POINT_COMA;//list by point-coma: filename1;filename2; ... filenameN;
               }
             }
-            if(type==HTML_SUBTYPE_TH||/*add tag for some <tag>...</tag> html objects*/
-              type==HTML_SUBTYPE_TD||
-              type==HTML_SUBTYPE_OPTION||
-              type==HTML_SUBTYPE_TR||
-              type==HTML_TYPE_SELECT||/*type==HTML_TYPE_DROPDOWN_LIST||type==HTML_TYPE_LISTBOX||*/
-              type==HTML_TYPE_TEXTAREA||
-              type==HTML_TYPE_TABLE){tag=new Tag();tag.type=type;tag_data.add(tag);tag_ind++;}
-            if(type==HTML_TYPE_TABLE||type==HTML_TYPE_SQL){
+            if(type==H.HTML_SUBTYPE_TH||/*add tag for some <tag>...</tag> html objects*/
+              type==H.HTML_SUBTYPE_TD||
+              type==H.HTML_SUBTYPE_OPTION||
+              type==H.HTML_SUBTYPE_TR||
+              type==H.HTML_TYPE_SELECT||/*type==H.HTML_TYPE_DROPDOWN_LIST||type==H.HTML_TYPE_LISTBOX||*/
+              type==H.HTML_TYPE_TEXTAREA||
+              type==H.HTML_TYPE_TABLE){tag=new Tag();tag.type=type;tag_data.add(tag);tag_ind++;}
+            if(type==H.HTML_TYPE_TABLE||type==H.HTML_TYPE_SQL){
               String page=this.getTablePage_(v);//page="..." for <table page="..."> <sql="" page="...">
               if(page!=null){
                 this.pageParamSubst(page);
                 //text servlet param value -> to number
                 page_param.substParam(sp);
-                str=this.removeTemplate(str,HTML_ELEMENT_TABLE_PAGE);//remove page
+                str=this.removeTemplate(str,H.HTML_ELEMENT_TABLE_PAGE);//remove page
               }
-              if(type==HTML_TYPE_TABLE)cols=this.getTableCols_(v);//cols="..."
+              if(type==H.HTML_TYPE_TABLE)cols=this.getTableCols_(v);//cols="..."
             }
-            if(cols!=null)str=this.removeTemplate(str,HTML_ELEMENT_TABLE_COLS);//remove cols
+            if(cols!=null)str=this.removeTemplate(str,H.HTML_ELEMENT_TABLE_COLS);//remove cols
             if(sql!=null){
-              str=this.removeTemplate(str,HTML_ELEMENT_SQL);//remove sql
+              str=this.removeTemplate(str,H.HTML_ELEMENT_SQL);//remove sql
               if(tag!=null){
-                if(type==HTML_SUBTYPE_TH||type==HTML_SUBTYPE_TD){//7. <td sql="..."> <th sql="...">
+                if(type==H.HTML_SUBTYPE_TH||type==H.HTML_SUBTYPE_TD){//7. <td sql="..."> <th sql="...">
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   GridData gd=database.getGridData(sessionID,sp,page_param.sqlNumber,page_param.pageNumber,page_param.rowCount);
                   Vector items=gd.items;
@@ -3873,24 +3880,24 @@ class HtmlResponse extends HtmlParse implements Interface
                   if(items!=null){items.clear();items=null;}//subitems remove?
                   gd=null;
                 }
-                else if(type==HTML_SUBTYPE_OPTION){//2. <option sql="...">
+                else if(type==H.HTML_SUBTYPE_OPTION){//2. <option sql="...">
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   tag.data=database.getStringValue(sessionID,sp);
                 }
-                else if(type==HTML_SUBTYPE_TR){//6. <tr sql="...">
+                else if(type==H.HTML_SUBTYPE_TR){//6. <tr sql="...">
                   StringListItem item;
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   Vector list=database.getStringList(sessionID,sp,1);
-                  tag.data=EMPTY;
+                  tag.data=C.EMPTY;
                   for(int i=0;i<list.size();i++){
                     item=(StringListItem)list.elementAt(i);
                     //html code from file->table_tr.html
-                    tag.data+=CODE_OPEN+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;//<td>
+                    tag.data+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;//<td>
                     tag.data+=item.id;
-                    tag.data+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TD+CODE_CLOSE+NEXT_LINE;//</td>/r/n;
+                    tag.data+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE+C.NEXT_LINE;//</td>/r/n;
                   }
                 }
-                else if(type==HTML_TYPE_SELECT/*||type==HTML_TYPE_DROPDOWN_LIST||type==HTML_TYPE_LISTBOX*/){//1. <select sql="...">
+                else if(type==H.HTML_TYPE_SELECT/*||type==H.HTML_TYPE_DROPDOWN_LIST||type==H.HTML_TYPE_LISTBOX*/){//1. <select sql="...">
                   StringListItem item;
                   selected_value=this.getSelected(v);//not remove "selected=..." from str!
                   //selected_value_by_name=this.getSelectedByName(v);
@@ -3901,7 +3908,7 @@ class HtmlResponse extends HtmlParse implements Interface
                   }
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   Vector list=database.getStringList(sessionID,sp,2);
-                  tag.data=EMPTY;
+                  tag.data=C.EMPTY;
                   //Manager.getLog().write("start SELECT\r\n");
                   //other way to list items->
                   //Object[] items=list.toArray();
@@ -3912,16 +3919,16 @@ class HtmlResponse extends HtmlParse implements Interface
                     item=(StringListItem)list.get(i);//item=(StringListItem)list.elementAt(i);
                     //Manager.getLog().write(item.value+"\r\n");
                     //html code from file->select_option.html
-                    tag.data+=CODE_OPEN+HTML_ELEMENT_SELECT_OPTION+SPACE;//<option_
+                    tag.data+=C.CODE_OPEN+H.HTML_ELEMENT_SELECT_OPTION+C.SPACE;//<option_
                     //@selected->selected.html
-                    if(selected_value!=null&&selected_value.equals(item.id))tag.data+=HTML_ELEMENT_SELECT_OPTION_SELECTED+SPACE;//selected_
-                    //if(selected_value_by_name!=null&&selected_value_by_name.equals(item.value))tag.data+=HTML_ELEMENT_SELECT_OPTION_SELECTED+SPACE;//selected_by_name_
-                    tag.data+=HTML_ELEMENT_SELECT_OPTION_VALUE+EQUAL+DOUBLE_UPPER+item.id+DOUBLE_UPPER+CODE_CLOSE+item.value;//value="...">...
-                    tag.data+=CODE_OPEN+SLASH+HTML_ELEMENT_SELECT_OPTION+CODE_CLOSE+NEXT_LINE;//</option>/r/n;
+                    if(selected_value!=null&&selected_value.equals(item.id))tag.data+=H.HTML_ELEMENT_SELECT_OPTION_SELECTED+C.SPACE;//selected_
+                    //if(selected_value_by_name!=null&&selected_value_by_name.equals(item.value))tag.data+=H.HTML_ELEMENT_SELECT_OPTION_SELECTED+C.SPACE;//selected_by_name_
+                    tag.data+=H.HTML_ELEMENT_SELECT_OPTION_VALUE+C.EQUAL+C.DOUBLE_UPPER+item.id+C.DOUBLE_UPPER+C.CODE_CLOSE+item.value;//value="...">...
+                    tag.data+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_SELECT_OPTION+C.CODE_CLOSE+C.NEXT_LINE;//</option>/r/n;
                   }
                   //Manager.getLog().write("stop SELECT\r\n");
                 }
-                else if(type==HTML_TYPE_TEXTAREA){//4. <textarea sql="...">
+                else if(type==H.HTML_TYPE_TEXTAREA){//4. <textarea sql="...">
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   GridData gd=database.getGridData(sessionID,sp,page_param.sqlNumber,page_param.pageNumber,page_param.rowCount);
                   Vector items=gd.items;
@@ -3930,7 +3937,7 @@ class HtmlResponse extends HtmlParse implements Interface
                   if(items!=null){items.clear();items=null;}//subitems remove?
                   gd=null;
                 }
-                else if(type==HTML_TYPE_TABLE){//5. <table sql="...">
+                else if(type==H.HTML_TYPE_TABLE){//5. <table sql="...">
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   GridData gd=database.getGridData(sessionID,sp,page_param.sqlNumber,page_param.pageNumber,page_param.rowCount);
                   Vector items=gd.items;
@@ -3940,52 +3947,52 @@ class HtmlResponse extends HtmlParse implements Interface
                   if(items!=null){items.clear();items=null;}//subitems remove?
                   gd=null;
                 }
-                str=CODE_OPEN+str+CODE_CLOSE;
+                str=C.CODE_OPEN+str+C.CODE_CLOSE;
               }//if tag
               else{//tag==null
-                if(type==HTML_TYPE_TEXT||type==HTML_TYPE_PASSWORD||type==HTML_TYPE_HIDDEN|| //3. <input sql="...">
-                  type==HTML_TYPE_CHECKBOX||type==HTML_TYPE_RADIO||type==HTML_TYPE_FILE||
-                  type==HTML_TYPE_BUTTON||type==HTML_TYPE_SUBMIT||type==HTML_TYPE_RESET){
+                if(type==H.HTML_TYPE_TEXT||type==H.HTML_TYPE_PASSWORD||type==H.HTML_TYPE_HIDDEN|| //3. <input sql="...">
+                  type==H.HTML_TYPE_CHECKBOX||type==H.HTML_TYPE_RADIO||type==H.HTML_TYPE_FILE||
+                  type==H.HTML_TYPE_BUTTON||type==H.HTML_TYPE_SUBMIT||type==H.HTML_TYPE_RESET){
                   StringListItem item;
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
-                  boolean col_3=(type==HTML_TYPE_CHECKBOX||type==HTML_TYPE_RADIO);
+                  boolean col_3=(type==H.HTML_TYPE_CHECKBOX||type==H.HTML_TYPE_RADIO);
                   Vector list=col_3?database.getStringList(sessionID,sp,3):database.getStringList(sessionID,sp,2);
                   int i=0,ind1,ind2;
-                  String r_str,all_str=EMPTY;
+                  String r_str,all_str=C.EMPTY;
                   while(i<list.size()){
                     r_str=str;
                     item=(StringListItem)list.elementAt(i);
-                    ind1=r_str.indexOf(HTML_ELEMENT_INPUT_NAME);
+                    ind1=r_str.indexOf(H.HTML_ELEMENT_INPUT_NAME);
                     //html code from file->input_name.html (warning! code without first space)
-                    if(ind1==-1)r_str+=SPACE+HTML_ELEMENT_INPUT_NAME+EQUAL+DOUBLE_UPPER+item.id+DOUBLE_UPPER;//add name
+                    if(ind1==-1)r_str+=C.SPACE+H.HTML_ELEMENT_INPUT_NAME+C.EQUAL+C.DOUBLE_UPPER+item.id+C.DOUBLE_UPPER;//add name
                     else{//replace name
-                      ind2=r_str.indexOf(SPACE,ind1);
+                      ind2=r_str.indexOf(C.SPACE,ind1);
                       if(ind2==-1)ind2=r_str.length();
                       //html code from file->input_name.html
-                      r_str=r_str.replaceFirst(r_str.substring(ind1,ind2),HTML_ELEMENT_INPUT_NAME+EQUAL+DOUBLE_UPPER+item.id+DOUBLE_UPPER);
+                      r_str=r_str.replaceFirst(r_str.substring(ind1,ind2),H.HTML_ELEMENT_INPUT_NAME+C.EQUAL+C.DOUBLE_UPPER+item.id+C.DOUBLE_UPPER);
                     }
-                    ind1=r_str.indexOf(HTML_ELEMENT_INPUT_VALUE);
+                    ind1=r_str.indexOf(H.HTML_ELEMENT_INPUT_VALUE);
                     //html code from file->input_value.html (warning! code without first space)
-                    if(ind1==-1)r_str+=SPACE+HTML_ELEMENT_INPUT_VALUE+EQUAL+DOUBLE_UPPER+item.value+DOUBLE_UPPER;//add value
+                    if(ind1==-1)r_str+=C.SPACE+H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+C.DOUBLE_UPPER+item.value+C.DOUBLE_UPPER;//add value
                     else{//replace value
-                      ind2=r_str.indexOf(SPACE,ind1);
+                      ind2=r_str.indexOf(C.SPACE,ind1);
                       if(ind2==-1)ind2=r_str.length();
                       //html code from file->input_value.html
-                      r_str=r_str.replaceFirst(r_str.substring(ind1,ind2),HTML_ELEMENT_INPUT_VALUE+EQUAL+DOUBLE_UPPER+item.value+DOUBLE_UPPER);
+                      r_str=r_str.replaceFirst(r_str.substring(ind1,ind2),H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+C.DOUBLE_UPPER+item.value+C.DOUBLE_UPPER);
                     }
-                    all_str+=CODE_OPEN+r_str+CODE_CLOSE+(col_3?item.value2:EMPTY)+NEXT_LINE;
+                    all_str+=C.CODE_OPEN+r_str+C.CODE_CLOSE+(col_3?item.value2:C.EMPTY)+C.NEXT_LINE;
                     i++;
                   }
                   str=all_str;
                 }
-                else if(type==HTML_TYPE_SQL){//8. <sql="...">
+                else if(type==H.HTML_TYPE_SQL){//8. <sql="...">
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   if(sql.startsWith(SQL_SELECT)||sql.startsWith(SQL_SELECT_UPPER_CASE)){
                     int from_index=-1,to_index=-1;
                     fetch=this.getSQLFetch(v);
                     if(fetch!=null){//patch fetch (fetch="1..10")
-                      if((percent_index=fetch.indexOf(POINT))!=-1){//(1..10)
-                        last_percent_index=fetch.lastIndexOf(POINT);
+                      if((percent_index=fetch.indexOf(C.POINT))!=-1){//(1..10)
+                        last_percent_index=fetch.lastIndexOf(C.POINT);
                         try{
                           from_index=Convert.toIntValue(fetch.substring(0,percent_index));
                           to_index=Convert.toIntValue(fetch.substring(last_percent_index+1));
@@ -3999,7 +4006,7 @@ class HtmlResponse extends HtmlParse implements Interface
                     total_row_count=gd.totalRowCount;
                     if(items!=null){
                       //write data to xls file->
-                      if(file!=null&&file.endsWith(POINT+EXTENSION_FILE_XLS)){this.writeToXls(items,file,ref,FILEPATH_SERVICE_TRASH);str=EMPTY;/*no data view*/}
+                      if(file!=null&&file.endsWith(C.POINT+EXTENSION_FILE_XLS)){this.writeToXls(items,file,ref,FILEPATH_SERVICE_TRASH);str=C.EMPTY;/*no data view*/}
                       else str=this.getGridData(items,file,ref,sp);
                       items.clear();items=null;//subitems remove?
                     }
@@ -4015,36 +4022,36 @@ class HtmlResponse extends HtmlParse implements Interface
                     database.executeSQL(sessionID,sp);
                   }
                 }
-                else if(type==HTML_TYPE_IMG||type==HTML_TYPE_IMAGE){//9. <img src="...">
+                else if(type==H.HTML_TYPE_IMG||type==H.HTML_TYPE_IMAGE){//9. <img src="...">
                   BytesListItem item;
                   sp.sqlIndex++;if(sql.startsWith(SQL_NUMBER)){page_param.sqlNumber=sp.sqlIndex;sql=sql.substring(1);}sp.sql=sql;
                   Vector list=database.getBytesList(sessionID,sp);
                   int i=0,ind1,ind2;
-                  String r_str,all_str=EMPTY,url;
+                  String r_str,all_str=C.EMPTY,url;
                   while(i<list.size()){
                     r_str=str;
                     item=(BytesListItem)list.elementAt(i);
                     if(item.value!=null&&item.value.length>0){//file buffer length>0
                       url=this.saveAsImageFile(item.value,item.id.length()==0?null:item.id);
-                      ind1=r_str.indexOf(HTML_ELEMENT_IMG_SRC);
+                      ind1=r_str.indexOf(H.HTML_ELEMENT_IMG_SRC);
                       //html code from file->img_src.html (warning! code without first space)
-                      if(ind1==-1)r_str+=SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER;//add src
+                      if(ind1==-1)r_str+=C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER;//add src
                       else{//replace src
-                        ind2=r_str.indexOf(SPACE,ind1);
+                        ind2=r_str.indexOf(C.SPACE,ind1);
                         if(ind2==-1)ind2=r_str.length();
                         //html code from file->img_src.html
-                        r_str=r_str.replaceFirst(r_str.substring(ind1,ind2),HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER);
+                        r_str=r_str.replaceFirst(r_str.substring(ind1,ind2),H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER);
                       }
                     }
-                    all_str+=CODE_OPEN+r_str+CODE_CLOSE+NEXT_LINE;
+                    all_str+=C.CODE_OPEN+r_str+C.CODE_CLOSE+C.NEXT_LINE;
                     i++;
                   }
                   str=all_str;
                 }
-                else str=CODE_OPEN+str+CODE_CLOSE;//other type
+                else str=C.CODE_OPEN+str+C.CODE_CLOSE;//other type
               }//else tag==null
             }//if sql
-            else str=CODE_OPEN+str+CODE_CLOSE;//sql==null
+            else str=C.CODE_OPEN+str+C.CODE_CLOSE;//sql==null
             v.clear();v=null;//clear all fields vector
             //add pages only to tags(th,td,textarea,table,sql)
             if(page_param.sqlNumber==sp.sqlIndex&&page_param.pageCount>0&&page_param.rowCount>0&&total_row_count>page_param.rowCount){
@@ -4067,18 +4074,18 @@ class HtmlResponse extends HtmlParse implements Interface
               }
             }
             if(str.length()>0)outStream.write(str.getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;
+            str=C.EMPTY;percent=false;
             }//if comment start
             }//if htmlCode
             else{//all other case
-              outStream.write((CODE_OPEN+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
-              str=EMPTY;percent=false;
+              outStream.write((C.CODE_OPEN+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+              str=C.EMPTY;percent=false;
             }
             }//if !comment
             else{//comment
-              outStream.write((CODE_OPEN+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
-              if(str.endsWith(HTML_ELEMENT_COMMENT_FINISH))comment=false;
-              str=EMPTY;percent=false;
+              outStream.write((C.CODE_OPEN+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+              if(str.endsWith(H.HTML_ELEMENT_COMMENT_FINISH))comment=false;
+              str=C.EMPTY;percent=false;
             }
           }//switch
           break;
@@ -4086,8 +4093,8 @@ class HtmlResponse extends HtmlParse implements Interface
           switch(status){
           case 1://data between </...<
           case 2://data between </...</
-            outStream.write((CODE_OPEN+SLASH+str).getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;break;
+            outStream.write((C.CODE_OPEN+C.SLASH+str).getBytes(manager.getLocalCodepage()));//->local codepage
+            str=C.EMPTY;percent=false;break;
           case 3://data between </...>
             if(!comment){
             if(htmlCode){//if htmlCode
@@ -4097,13 +4104,13 @@ class HtmlResponse extends HtmlParse implements Interface
             Vector v=this.getFields_(str);//v->all fields of tag
             //if(manager.isDebug())manager.getLog().write(sessionID,DEBUG_PARSE_ATTRIBUTE_VALUE,v.toString());
             type=this.getType(v);
-            if((type==HTML_SUBTYPE_TH||/*parse tag for some <tag>...</tag> html objects*/
-              type==HTML_SUBTYPE_TD||
-              type==HTML_SUBTYPE_OPTION||
-              type==HTML_SUBTYPE_TR||
-              type==HTML_TYPE_TEXTAREA||
-              type==HTML_TYPE_SELECT||/*type==HTML_TYPE_DROPDOWN_LIST||type==HTML_TYPE_LISTBOX||*/
-              type==HTML_TYPE_TABLE)&&tag_ind<tag_data.size()&&tag_ind>-1){
+            if((type==H.HTML_SUBTYPE_TH||/*parse tag for some <tag>...</tag> html objects*/
+              type==H.HTML_SUBTYPE_TD||
+              type==H.HTML_SUBTYPE_OPTION||
+              type==H.HTML_SUBTYPE_TR||
+              type==H.HTML_TYPE_TEXTAREA||
+              type==H.HTML_TYPE_SELECT||/*type==H.HTML_TYPE_DROPDOWN_LIST||type==H.HTML_TYPE_LISTBOX||*/
+              type==H.HTML_TYPE_TABLE)&&tag_ind<tag_data.size()&&tag_ind>-1){
                 tag=(Tag)tag_data.get(tag_ind);
                 if(type==tag.type&&tag.data!=null){
                   if(page_param.sqlNumber==tag.sqlIndex&&page_param.pageCount>0&&page_param.rowCount>0&&tag.totalRowCount>page_param.rowCount){
@@ -4115,21 +4122,21 @@ class HtmlResponse extends HtmlParse implements Interface
                 tag_data.remove(tag_ind);tag_ind--;tag_data.trimToSize();//kill tag of any type
             }
             v.clear();v=null;//clear all fields vector
-            outStream.write((CODE_OPEN+SLASH+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+            outStream.write((C.CODE_OPEN+C.SLASH+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
             //down part of pages(down,updown option)
             if(pages!=null){if(page_param.pageType==1||page_param.pageType==2)outStream.write(pages.getBytes(manager.getLocalCodepage()));}//->local codepage
-            str=EMPTY;percent=false;
+            str=C.EMPTY;percent=false;
             }//if htmlCode
             else{//all other case
-              outStream.write((CODE_OPEN+SLASH+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
-              if(str.startsWith(HTML_ELEMENT_SCRIPT))htmlCode=true;//if </script>
-              str=EMPTY;percent=false;
+              outStream.write((C.CODE_OPEN+C.SLASH+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+              if(str.startsWith(H.HTML_ELEMENT_SCRIPT))htmlCode=true;//if </script>
+              str=C.EMPTY;percent=false;
             }
             }//if !comment
             else{//comment
-              outStream.write((CODE_OPEN+SLASH+str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
-              if(str.endsWith(HTML_ELEMENT_COMMENT_FINISH))comment=false;
-              str=EMPTY;percent=false;
+              outStream.write((C.CODE_OPEN+C.SLASH+str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+              if(str.endsWith(H.HTML_ELEMENT_COMMENT_FINISH))comment=false;
+              str=C.EMPTY;percent=false;
             }
           }//switch
           break;
@@ -4138,11 +4145,11 @@ class HtmlResponse extends HtmlParse implements Interface
           case 1://data between >...<
           case 2://data between >...</
             outStream.write(str.getBytes(manager.getLocalCodepage()));//->local codepage
-            str=EMPTY;percent=false;break;
+            str=C.EMPTY;percent=false;break;
           case 3://data between >...>
-            outStream.write((str+CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
-            if(comment&&str.endsWith(HTML_ELEMENT_COMMENT_FINISH))comment=false;
-            str=EMPTY;percent=false;
+            outStream.write((str+C.CODE_CLOSE).getBytes(manager.getLocalCodepage()));//->local codepage
+            if(comment&&str.endsWith(H.HTML_ELEMENT_COMMENT_FINISH))comment=false;
+            str=C.EMPTY;percent=false;
           }//switch
         }//switch last_status
         last_status=status;
@@ -4198,19 +4205,19 @@ class HtmlResponse extends HtmlParse implements Interface
   {
     BufferParam buf_param=null;
     if(number<ServletParam.BufferParamList.size())buf_param=(BufferParam)servletParam.BufferParamList.get(number);
-    if(buf_param!=null)return buf_param.name;else return EMPTY;
+    if(buf_param!=null)return buf_param.name;else return C.EMPTY;
   }
   public String getParamFilename(int number)
   {
     BufferParam buf_param=null;
     if(number<ServletParam.BufferParamList.size())buf_param=(BufferParam)servletParam.BufferParamList.get(number);
-    if(buf_param!=null)return buf_param.filename;else return EMPTY;
+    if(buf_param!=null)return buf_param.filename;else return C.EMPTY;
   }
   public String getParamContentType(int number)
   {
     BufferParam buf_param=null;
     if(number<ServletParam.BufferParamList.size())buf_param=(BufferParam)servletParam.BufferParamList.get(number);
-    if(buf_param!=null)return buf_param.contentType;else return EMPTY;
+    if(buf_param!=null)return buf_param.contentType;else return C.EMPTY;
   }*/
   public void setParam(int number,String value)
   {
@@ -4246,7 +4253,7 @@ class HtmlResponse extends HtmlParse implements Interface
     int index=filepath.lastIndexOf(LOCAL_DELIM);
     if(index!=-1){// ...path/sessionId.filename.ext
       sessionID_filename=filepath.substring(++index);
-      index=sessionID_filename.indexOf(POINT);
+      index=sessionID_filename.indexOf(C.POINT);
       if(index!=-1)filename=sessionID_filename.substring(++index);
     }
     else sessionID_filename=filepath;//filename
@@ -4323,8 +4330,8 @@ class HtmlResponse extends HtmlParse implements Interface
   {
     String ret_val=str;
     int percent_index,last_percent_index;
-    while((percent_index=str.indexOf(Interface.PERCENT_PARAM))!=-1){//%param1%param
-      if((last_percent_index=str.indexOf(Interface.PERCENT_PARAM,percent_index+6))!=-1){
+    while((percent_index=str.indexOf(I.PERCENT_PARAM))!=-1){//%param1%param
+      if((last_percent_index=str.indexOf(I.PERCENT_PARAM,percent_index+6))!=-1){
         String substr=(String)servletParam.paramList.get(Convert.toIntValue(str.substring(percent_index+6,last_percent_index).trim()));
         ret_val=str.substring(0,percent_index)+substr+str.substring(last_percent_index+6);
       }
@@ -4372,7 +4379,7 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   public String getCookiesList()
   {
-    String ret_val=EMPTY;
+    String ret_val=C.EMPTY;
     try{
     Cookie[] cookies=servletParam.request.getCookies();
     Cookie cookie;
@@ -4427,7 +4434,7 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   public String getBytesValueAsBase64String(String value,String substr)
   {
-    String ret_val=EMPTY,base64string;
+    String ret_val=C.EMPTY,base64string;
     servletParam.sqlIndex++;servletParam.sql=value;
     base64string=database.getBytesValueAsBase64String(sessionID,servletParam);
     if(base64string!=null){
@@ -4438,7 +4445,7 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   public String getBytesAsBase64String(String value,String substr)
   {
-    String ret_val=EMPTY,base64string;
+    String ret_val=C.EMPTY,base64string;
     servletParam.sqlIndex++;servletParam.sql=value;
     base64string=database.getBytesAsBase64String(sessionID,servletParam);
     if(base64string!=null){
@@ -4449,7 +4456,7 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   public String getStringList(String value)//2S
   {
-    String ret_val=EMPTY;
+    String ret_val=C.EMPTY;
     StringListItem item;
     servletParam.sqlIndex++;servletParam.sql=value;
     Vector list=database.getStringList(sessionID,servletParam,1);
@@ -4482,7 +4489,7 @@ class HtmlResponse extends HtmlParse implements Interface
   private void pageParamSubst(String param)
   {
     String str;
-    StringTokenizer st=new StringTokenizer(param,POINT_COMA);//=Convert.getValues(param,POINT_COMA);
+    StringTokenizer st=new StringTokenizer(param,C.POINT_COMA);//=Convert.getValues(param,C.POINT_COMA);
     while(st.hasMoreTokens()){
       str=st.nextToken().trim();
       if(str.startsWith(SERVICE_ROW_COUNT)){servletParam.rowCount=Convert.getValue(str);}
@@ -4511,7 +4518,7 @@ class HtmlResponse extends HtmlParse implements Interface
     boolean text=false;
     if(start_index==-1)return ret_val;
     for(int i=start_index;i<size;i++){
-      if(str.charAt(i)==CODE_DOUBLE_UPPER){
+      if(str.charAt(i)==C.CODE_DOUBLE_UPPER){
         if(!text)text=true;else text=false;//text or no text
       }
       else if(str.charAt(i)==code){
@@ -4528,11 +4535,11 @@ class HtmlResponse extends HtmlParse implements Interface
     if(start_index==-1)return ret_val;
     for(int i=start_index;i<size;i++){
       if(!text&&count==0&&str.charAt(i)==code){ret_val=i;break;}
-      else if(str.charAt(i)==CODE_DOUBLE_UPPER){
+      else if(str.charAt(i)==C.CODE_DOUBLE_UPPER){
         if(!text)text=true;else text=false;//text or no text
       }
-      else if(str.charAt(i)==CODE_OPEN_){if(!text)count++;}
-      else if(str.charAt(i)==CODE_CLOSE_){if(!text&&count>0)count--;}
+      else if(str.charAt(i)==C.CODE_OPEN_){if(!text)count++;}
+      else if(str.charAt(i)==C.CODE_CLOSE_){if(!text&&count>0)count--;}
     }
     return ret_val;
   }
@@ -4546,12 +4553,12 @@ class HtmlResponse extends HtmlParse implements Interface
     boolean text=false;
     //Manager.getLog().write("args name="+args_name+" size="+size+"\r\n");
     for(int i=0;i<size;i++){
-      if(args_name.charAt(i)==CODE_DOUBLE_UPPER){
+      if(args_name.charAt(i)==C.CODE_DOUBLE_UPPER){
         if(!text)text=true;else text=false;//text or no text
       }
-      else if(args_name.charAt(i)==CODE_OPEN_){if(!text)count++;}
-      else if(args_name.charAt(i)==CODE_CLOSE_){if(!text&&count>0)count--;}
-      else if(args_name.charAt(i)==CODE_COMA){
+      else if(args_name.charAt(i)==C.CODE_OPEN_){if(!text)count++;}
+      else if(args_name.charAt(i)==C.CODE_CLOSE_){if(!text&&count>0)count--;}
+      else if(args_name.charAt(i)==C.CODE_COMA){
         if(!text&&count==0){ret_val.add(args_name.substring(index,i).trim());index=i+1;}
       }
     }
@@ -4573,15 +4580,15 @@ class HtmlResponse extends HtmlParse implements Interface
       Object o_c;//Object of Class c;
       String class_name,method_name,args_name,str0=s.trim(),str1=str0,str2=null;
       int index1,index2,index3;
-      index2=str1.indexOf(CODE_OPEN_);
-      //Manager.getLog().write("getLastIndex(args)="+str1+","+CODE_CLOSE_+","+index2+"\r\n");
-      index3=this.getLastIndex(str1,CODE_CLOSE_,index2+1);
+      index2=str1.indexOf(C.CODE_OPEN_);
+      //Manager.getLog().write("getLastIndex(args)="+str1+","+C.CODE_CLOSE_+","+index2+"\r\n");
+      index3=this.getLastIndex(str1,C.CODE_CLOSE_,index2+1);
       //Manager.getLog().write("getLastIndex()="+index3+"\r\n");
       if(index2==-1||index3==-1){//4."this.class1.classN.field"
         if(str1.startsWith(THIS))str1=str1.substring(5);
         /*sub-class parsing class1...classN*/
         c=this.getClass();o_c=this;
-        StringTokenizer st=new StringTokenizer(str1,POINT);
+        StringTokenizer st=new StringTokenizer(str1,C.POINT);
         while(st.hasMoreTokens()){//class & class object seek
           f=c.getDeclaredField(st.nextToken().trim());
           o=f.get(o_c);
@@ -4596,12 +4603,12 @@ class HtmlResponse extends HtmlParse implements Interface
         str2=str1.substring(index3+1).trim();//string after ()
         str1=str1.substring(0,index3+1).trim();//string with ()
       }
-      index1=str0.lastIndexOf(CODE_POINT);
-      if(index1==-1)class_name=EMPTY;//without "this" as class_name(this.getCookie(<cookie_name>) as getCookie(<cookie_name>))
+      index1=str0.lastIndexOf(C.CODE_POINT);
+      if(index1==-1)class_name=C.EMPTY;//without "this" as class_name(this.getCookie(<cookie_name>) as getCookie(<cookie_name>))
       else class_name=str1.substring(0,index1);
       //Manager.getLog().write("class for name="+class_name+"\r\n");
       //seek if "this" (object) declared ...
-      if(class_name.equals(EMPTY)){//<method_name>(<args>)
+      if(class_name.equals(C.EMPTY)){//<method_name>(<args>)
         c=this.getClass();o_c=this;
       }
       else if(class_name.startsWith(THIS)){//this.<method_name>(<args>) || this.<class_name1>.<class_nameN>.<method_name>(<args>)
@@ -4611,7 +4618,7 @@ class HtmlResponse extends HtmlParse implements Interface
         else{//3."this.class1.classN.method(args)"
           /*sub-class parsing class1...classN*/
           c=this.getClass();o_c=this;
-          StringTokenizer st=new StringTokenizer(class_name.substring(5),POINT);
+          StringTokenizer st=new StringTokenizer(class_name.substring(5),C.POINT);
           while(st.hasMoreTokens()){//class & class object seek
             f=c.getDeclaredField(st.nextToken().trim());
             o=f.get(o_c);
@@ -4642,13 +4649,13 @@ class HtmlResponse extends HtmlParse implements Interface
         c=o.getClass();
         o_c=o;
         str1=str2;
-        index2=str1.indexOf(CODE_OPEN_);
+        index2=str1.indexOf(C.CODE_OPEN_);
         //Manager.getLog().write("point1\r\n");
-        //index3=str1.indexOf(CODE_CLOSE_,index2);
-        index3=this.getLastIndex(str1,CODE_CLOSE_,index2+1);
+        //index3=str1.indexOf(C.CODE_CLOSE_,index2);
+        index3=this.getLastIndex(str1,C.CODE_CLOSE_,index2+1);
         //Manager.getLog().write("point2\r\n");
         str2=null;
-        if(index2==-1||index3==-1)return o==null?EMPTY:o;
+        if(index2==-1||index3==-1)return o==null?C.EMPTY:o;
         if(index3+1<=str1.length()){
           //Manager.getLog().write("point3\r\n");
           str0=str1.substring(0,index2).trim();//string without ()
@@ -4658,11 +4665,11 @@ class HtmlResponse extends HtmlParse implements Interface
           str1=str1.substring(0,index3+1).trim();//string with ()
         }
         //Manager.getLog().write("point6\r\n");
-        index1=str0.lastIndexOf(CODE_POINT);
+        index1=str0.lastIndexOf(C.CODE_POINT);
         //Manager.getLog().write("next substring="+str2+"\r\n");
       }while(true);
     }catch(Exception e){manager.getLog().write(sessionID,WARNING_SESSION_EXCEPTION,e.toString());/*manager.getLog().write("invoke_method exception="+e.toString()+"\r\n");*/}
-    return o==null?EMPTY:o;
+    return o==null?C.EMPTY:o;
   }
   private Object invoke(String args_name,String method_name,Class c,Object o)
   {
@@ -4679,25 +4686,25 @@ class HtmlResponse extends HtmlParse implements Interface
       for(token_index=0;token_index<size;token_index++){
         token=(String)args.elementAt(token_index);
         //Manager.getLog().write("args ["+token_index+"]="+token+"\r\n");
-        if(token.startsWith(DOUBLE_UPPER)){token=token.replaceAll(DOUBLE_UPPER,EMPTY);arg_type[token_index]=java.lang.String.class;arg_value[token_index]=token;}//String
-        else if(token.startsWith(UPPER)){token=token.replaceAll(UPPER,EMPTY);arg_type[token_index]=char.class;arg_value[token_index]=token.charAt(0);}//char
-        else if(token.equals(TRUE)||token.equals(FALSE)){arg_type[token_index]=boolean.class;arg_value[token_index]=java.lang.Boolean.parseBoolean(token);}//boolean
-        else if(token.indexOf(POINT)!=-1){
+        if(token.startsWith(C.DOUBLE_UPPER)){token=token.replaceAll(C.DOUBLE_UPPER,C.EMPTY);arg_type[token_index]=java.lang.String.class;arg_value[token_index]=token;}//String
+        else if(token.startsWith(C.UPPER)){token=token.replaceAll(C.UPPER,C.EMPTY);arg_type[token_index]=char.class;arg_value[token_index]=token.charAt(0);}//char
+        else if(token.equals(C.TRUE)||token.equals(C.FALSE)){arg_type[token_index]=boolean.class;arg_value[token_index]=java.lang.Boolean.parseBoolean(token);}//boolean
+        else if(token.indexOf(C.POINT)!=-1){
           Class object_class=null;
           index=-1;
-          if(token.startsWith(OPEN)){//object converter-> (java.lang.Object)...
-            index=this.getIndex(token,CODE_CLOSE_,1);
+          if(token.startsWith(C.OPEN)){//object converter-> (java.lang.Object)...
+            index=this.getIndex(token,C.CODE_CLOSE_,1);
             if(index!=-1){
               class_name=token.substring(1,index);//remove ( & )
               object_class=Class.forName(class_name);
             }
           }
           token=token.substring(index+1);
-          if(token.startsWith(DOUBLE_UPPER)){//string "..."
-            token=token.replaceAll(DOUBLE_UPPER,EMPTY);//remove " & "
+          if(token.startsWith(C.DOUBLE_UPPER)){//string "..."
+            token=token.replaceAll(C.DOUBLE_UPPER,C.EMPTY);//remove " & "
             arg_type[token_index]=object_class;arg_value[token_index]=token;//Object
           }
-          else if(token.indexOf(OPEN)!=-1){arg_type[token_index]=java.lang.Object.class;arg_value[token_index]=this.invoke_method(token);}//recursive call
+          else if(token.indexOf(C.OPEN)!=-1){arg_type[token_index]=java.lang.Object.class;arg_value[token_index]=this.invoke_method(token);}//recursive call
           else{arg_type[token_index]=float.class;arg_value[token_index]=java.lang.Float.parseFloat(token);}//float
         }
         else{arg_type[token_index]=int.class;arg_value[token_index]=java.lang.Integer.parseInt(token);}//int
@@ -4752,24 +4759,24 @@ class HtmlResponse extends HtmlParse implements Interface
   {
     int size,count,i;
     char ch;
-    if(str.startsWith(OPEN)){//plsql
+    if(str.startsWith(C.OPEN)){//plsql
       //search plsql close
       size=str.length();
       count=1;//open count
       for(i=1;i<size;i++){
-        if(str.charAt(i)==CODE_OPEN_)count++;
-        else if(str.charAt(i)==CODE_CLOSE_)count--;
+        if(str.charAt(i)==C.CODE_OPEN_)count++;
+        else if(str.charAt(i)==C.CODE_CLOSE_)count--;
         if(count==0)break;
       }
       str=str.substring(1,i);
       sp.sqlIndex++;sp.sql=str;//for %if_%if sql index incrementing
       str=database.executePLSQL(session_id,sp);
     }
-    else if(str.startsWith(UPPER)){//const string
+    else if(str.startsWith(C.UPPER)){//const string
       //search string end
       size=str.length();
       for(i=1;i<size;i++){
-        if(str.charAt(i)==CODE_UPPER)break;
+        if(str.charAt(i)==C.CODE_UPPER)break;
       }
       str=str.substring(1,i);
     }
@@ -4789,10 +4796,10 @@ class HtmlResponse extends HtmlParse implements Interface
       //search string or number end
       size=str.length();
       for(i=0;i<size;i++){
-        if(str.charAt(i)==CODE_EXCLAIM)break;//!
-        else if(str.charAt(i)==CODE_MORE)break;//>
-        else if(str.charAt(i)==CODE_LESS)break;//<
-        else if(str.charAt(i)==CODE_EQUAL)break;//=
+        if(str.charAt(i)==C.CODE_EXCLAIM)break;//!
+        else if(str.charAt(i)==C.CODE_MORE)break;//>
+        else if(str.charAt(i)==C.CODE_LESS)break;//<
+        else if(str.charAt(i)==C.CODE_EQUAL)break;//=
       }
       str=str.substring(0,i);
     }
@@ -4810,11 +4817,11 @@ class HtmlResponse extends HtmlParse implements Interface
     //example: "(SELECT id FROM table WHERE id=1)=1" "param0='get_name'" "login='user'"
     //example: "(SELECT system.main() FROM DUAL)>0" || "param0>0" || "login='user'"
     //example: "(SELECT system.main() FROM DUAL)>0" | "param0>0&login='user'"
-    //WARNING! must use allways DOUBLE_UPPER if specific tags present (such as: '<','>')
+    //WARNING! must use allways C.DOUBLE_UPPER if specific tags present (such as: '<','>')
     str_size=str.length();
     while(dupper_index<str_size-1&&!ret_val/*this is a OR condition*/){
-      dupper_index=str.indexOf(DOUBLE_UPPER,dupper_index+1);
-      last_dupper_index=str.indexOf(DOUBLE_UPPER,dupper_index+1);
+      dupper_index=str.indexOf(C.DOUBLE_UPPER,dupper_index+1);
+      last_dupper_index=str.indexOf(C.DOUBLE_UPPER,dupper_index+1);
       //Manager.getLog().write("dupper index="+dupper_index+" last duper="+last_dupper_index+"\r\n");
       if(sub_str==null&&dupper_index==-1){//str without double upper
         sub_str=str;dupper_index=str_size;
@@ -4825,7 +4832,7 @@ class HtmlResponse extends HtmlParse implements Interface
         dupper_index=last_dupper_index;
       }
       //Manager.getLog().write("sub_str="+sub_str+"\r\n");
-      StringTokenizer st=new StringTokenizer(sub_str,AND/*"&"*/);//and operator between operands (" ... & ... ")
+      StringTokenizer st=new StringTokenizer(sub_str,C.AND/*"&"*/);//and operator between operands (" ... & ... ")
       while(st.hasMoreTokens()){//seek parts of str
         s=st.nextToken().trim();
         //Manager.getLog().write("sub_str(s)="+s+"\r\n");
@@ -4840,14 +4847,14 @@ class HtmlResponse extends HtmlParse implements Interface
         //Manager.getLog().write("INDEX="+index+"\r\n");
         for(;index<size;index++){
           if(index<size-1){
-            if(s.charAt(index)==CODE_EQUAL){type=1;s=s.substring(index+1);break;}
-            else if(s.charAt(index)==CODE_MORE&&s.charAt(index+1)!=CODE_EQUAL){type=2;s=s.substring(index+1);break;}
-            else if(s.charAt(index)==CODE_LESS&&s.charAt(index+1)!=CODE_EQUAL&&s.charAt(index+1)!=CODE_MORE){type=3;s=s.substring(index+1);break;}
+            if(s.charAt(index)==C.CODE_EQUAL){type=1;s=s.substring(index+1);break;}
+            else if(s.charAt(index)==C.CODE_MORE&&s.charAt(index+1)!=C.CODE_EQUAL){type=2;s=s.substring(index+1);break;}
+            else if(s.charAt(index)==C.CODE_LESS&&s.charAt(index+1)!=C.CODE_EQUAL&&s.charAt(index+1)!=C.CODE_MORE){type=3;s=s.substring(index+1);break;}
             else if(index<size-2){
-              if(s.charAt(index)==CODE_MORE&&s.charAt(index+1)==CODE_EQUAL){type=4;s=s.substring(index+2);break;}
-              if(s.charAt(index)==CODE_LESS&&s.charAt(index+1)==CODE_EQUAL){type=5;s=s.substring(index+2);break;}
-              if(s.charAt(index)==CODE_EXCLAIM&&s.charAt(index+1)==CODE_EQUAL){type=6;s=s.substring(index+2);break;}
-              if(s.charAt(index)==CODE_LESS&&s.charAt(index+1)==CODE_MORE){type=6;s=s.substring(index+2);break;}
+              if(s.charAt(index)==C.CODE_MORE&&s.charAt(index+1)==C.CODE_EQUAL){type=4;s=s.substring(index+2);break;}
+              if(s.charAt(index)==C.CODE_LESS&&s.charAt(index+1)==C.CODE_EQUAL){type=5;s=s.substring(index+2);break;}
+              if(s.charAt(index)==C.CODE_EXCLAIM&&s.charAt(index+1)==C.CODE_EQUAL){type=6;s=s.substring(index+2);break;}
+              if(s.charAt(index)==C.CODE_LESS&&s.charAt(index+1)==C.CODE_MORE){type=6;s=s.substring(index+2);break;}
             }//if size-2
           }//if size-1
         }//for
@@ -4909,14 +4916,14 @@ class HtmlResponse extends HtmlParse implements Interface
     int index=0;
     //Manager.getLog().write("START_ENCODED="+str+"\r\n");
     String s=str,ret_val=str,pv,param,value;
-    boolean is_quest=s.contains(QUEST);//url?query
-    if(is_quest)s=Convert.getValue(s,QUEST);//s=query
+    boolean is_quest=s.contains(C.QUEST);//url?query
+    if(is_quest)s=Convert.getValue(s,C.QUEST);//s=query
     if(s!=null&&s.length()>0){
       //replace specific to normal
-      s=s.replaceAll(QUOT,DOUBLE_UPPER).replaceAll(APOS,UPPER).replaceAll(LT,OPEN_TAG).replaceAll(GT,CLOSE_TAG);
+      s=s.replaceAll(C.QUOT,C.DOUBLE_UPPER).replaceAll(C.APOS,C.UPPER).replaceAll(C.LT,C.OPEN_TAG).replaceAll(C.GT,C.CLOSE_TAG);
       Vector v=Convert.getValues(s,REQUEST_DELIM);
-      if(is_quest)ret_val=Convert.getParam(str,QUEST)+QUEST;//ret_val=url?
-      else ret_val=EMPTY;//ret_val=''
+      if(is_quest)ret_val=Convert.getParam(str,C.QUEST)+C.QUEST;//ret_val=url?
+      else ret_val=C.EMPTY;//ret_val=''
       for(int i=0;i<v.size();i++){
         pv=(String)v.get(i);
         if(pv!=null&&pv.length()>0){
@@ -4924,12 +4931,12 @@ class HtmlResponse extends HtmlParse implements Interface
           value=Convert.getValue(pv);
           if(value!=null&&value.length()>0){
             if(!is_encoded(value)){//replace normal to specifiers (before encode)
-              if(!not_quot)value=value.replaceAll(DOUBLE_UPPER,QUOT).replaceAll(UPPER,APOS).replaceAll(OPEN_TAG,LT).replaceAll(CLOSE_TAG,GT);
+              if(!not_quot)value=value.replaceAll(C.DOUBLE_UPPER,C.QUOT).replaceAll(C.UPPER,C.APOS).replaceAll(C.OPEN_TAG,C.LT).replaceAll(C.CLOSE_TAG,C.GT);
               value=URLEncoder.encode(value);//URL encode
             }
-          }else value=EMPTY;
-          if(index==0)ret_val+=param+EQUAL+value;
-          else ret_val+=REQUEST_DELIM+param+EQUAL+value;
+          }else value=C.EMPTY;
+          if(index==0)ret_val+=param+C.EQUAL+value;
+          else ret_val+=REQUEST_DELIM+param+C.EQUAL+value;
           index++;
         }
       }
@@ -4942,27 +4949,27 @@ class HtmlResponse extends HtmlParse implements Interface
   {
     int percent_index,last_percent_index;
     //login substitutions (%login%login)
-    if((percent_index=str.indexOf(Interface.PERCENT_LOGIN))!=-1){//%login%login
-      if((last_percent_index=str.indexOf(Interface.PERCENT_LOGIN,percent_index+6))!=-1){
+    if((percent_index=str.indexOf(I.PERCENT_LOGIN))!=-1){//%login%login
+      if((last_percent_index=str.indexOf(I.PERCENT_LOGIN,percent_index+6))!=-1){
         str=str.substring(0,percent_index)+sp.login+str.substring(last_percent_index+6);
       }
     }
     //password substitutions (%password%password)
-    if((percent_index=str.indexOf(Interface.PERCENT_PASSWORD))!=-1){//%password%password
-      if((last_percent_index=str.indexOf(Interface.PERCENT_PASSWORD,percent_index+9))!=-1){
+    if((percent_index=str.indexOf(I.PERCENT_PASSWORD))!=-1){//%password%password
+      if((last_percent_index=str.indexOf(I.PERCENT_PASSWORD,percent_index+9))!=-1){
         str=str.substring(0,percent_index)+sp.password+str.substring(last_percent_index+9);
       }
     }
     //database substitutions (%database%database)
-    if((percent_index=str.indexOf(Interface.PERCENT_DATABASE))!=-1){//%database%database
-      if((last_percent_index=str.indexOf(Interface.PERCENT_DATABASE,percent_index+9))!=-1){
+    if((percent_index=str.indexOf(I.PERCENT_DATABASE))!=-1){//%database%database
+      if((last_percent_index=str.indexOf(I.PERCENT_DATABASE,percent_index+9))!=-1){
         str=str.substring(0,percent_index)+sp.database+str.substring(last_percent_index+9);
       }
     }
     //param# substitutions by number (%param<number>%param)
     while(true){
-      if((percent_index=str.indexOf(Interface.PERCENT_PARAM))!=-1){//%param1%param
-        if((last_percent_index=str.indexOf(Interface.PERCENT_PARAM,percent_index+6))!=-1){
+      if((percent_index=str.indexOf(I.PERCENT_PARAM))!=-1){//%param1%param
+        if((last_percent_index=str.indexOf(I.PERCENT_PARAM,percent_index+6))!=-1){
           String substr=(String)sp.paramList.get(Convert.toIntValue(str.substring(percent_index+6,last_percent_index).trim()));
           //always encode for a href
           //Manager.getLog().write("REPLACE_MACRO(param#"+str.substring(percent_index+6,last_percent_index).trim()+")="+substr+"\r\n");
@@ -4983,8 +4990,8 @@ class HtmlResponse extends HtmlParse implements Interface
     //filename format: <SessionID_BufferNumber>
     String str,filename,filepath,url;
     if(name==null||name.length()==0){
-      filename=Convert.toString(sessionID)+DOWN+Convert.toString(++bufferNumber);
-      if(extension!=null&&extension.length()>0)filename+=POINT+extension.trim();
+      filename=Convert.toString(sessionID)+C.DOWN+Convert.toString(++bufferNumber);
+      if(extension!=null&&extension.length()>0)filename+=C.POINT+extension.trim();
     }else filename=name.trim();
     str=manager.getInitial().getServiceTrash();//ini service trash dir
     if(str!=null&&!str.endsWith(LOCAL_DELIM_2))str+=LOCAL_DELIM_2;
@@ -5003,19 +5010,19 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   private String removeTemplate(String data,String template)
   {
-    String ret_val=EMPTY,str,str2;
-    StringTokenizer st=new StringTokenizer(data,SPACE);
+    String ret_val=C.EMPTY,str,str2;
+    StringTokenizer st=new StringTokenizer(data,C.SPACE);
     while(st.hasMoreTokens()){
       str=st.nextToken().trim();
       if(!str.startsWith(template)){
-        if(ret_val.length()>0)ret_val+=SPACE;
+        if(ret_val.length()>0)ret_val+=C.SPACE;
         ret_val+=str;
       }
       else{
-        int i=str.indexOf(CODE_EQUAL);//seek "="
+        int i=str.indexOf(C.CODE_EQUAL);//seek "="
         if(i==-1);
-        else if(str.charAt(++i)==CODE_DOUBLE_UPPER){
-          while(!str.endsWith(DOUBLE_UPPER)&&st.hasMoreTokens()){str2=st.nextToken().trim();str+=SPACE+str2;}
+        else if(str.charAt(++i)==C.CODE_DOUBLE_UPPER){
+          while(!str.endsWith(C.DOUBLE_UPPER)&&st.hasMoreTokens()){str2=st.nextToken().trim();str+=C.SPACE+str2;}
         }
       }
     }
@@ -5023,7 +5030,7 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   private String getGridData(Vector list,String file,String ref,ServletParam sp)
   {
-    String str=EMPTY,sub_str,s=EMPTY,url,title=EMPTY,filename;
+    String str=C.EMPTY,sub_str,s=C.EMPTY,url,title=C.EMPTY,filename;
     int index;
     Vector sub_list;
     GridDataItem gdi;
@@ -5032,80 +5039,80 @@ class HtmlResponse extends HtmlParse implements Interface
       for(int j=0;j<sub_list.size();j++){
         //grid start
         gdi=(GridDataItem)sub_list.elementAt(j);
-        sub_str=EMPTY;
+        sub_str=C.EMPTY;
         if(gdi.type==ITEM_TYPE_STRING){
           s=gdi.stringValue;
-          if(ref!=null&&ref.startsWith(HTML_ELEMENT_A)&&/*a href reference and url from database*/
+          if(ref!=null&&ref.startsWith(H.HTML_ELEMENT_A)&&/*a href reference and url from database*/
           j+1<sub_list.size()&&((GridDataItem)sub_list.elementAt(j+1)).type==ITEM_TYPE_STRING){//next value is url
             url=((GridDataItem)sub_list.elementAt(j+1)).stringValue;
             url=this.replaceMacro(url,sp);//replace macro (%login,%password,%database)
             if(j+2<sub_list.size()&&((GridDataItem)sub_list.elementAt(j+2)).type==ITEM_TYPE_STRING){//2next value is title
-              title=((GridDataItem)sub_list.elementAt(j+2)).stringValue;j++;}else title=EMPTY;
+              title=((GridDataItem)sub_list.elementAt(j+2)).stringValue;j++;}else title=C.EMPTY;
             //html code from file->a_href.html
-            sub_str+=CODE_OPEN+ref/*HTML_ELEMENT_A*/+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+
+            sub_str+=C.CODE_OPEN+ref/*H.HTML_ELEMENT_A*/+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+
             //@title->title.html
-            (title.length()>0?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+title+DOUBLE_UPPER:EMPTY)+CODE_CLOSE;//<a href="...">
-            sub_str+=(s.length()>0?s:EMPTY)+CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE;//...</a>
+            (title.length()>0?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+title+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE;//<a href="...">
+            sub_str+=(s.length()>0?s:C.EMPTY)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE;//...</a>
             if(file!=null)sub_str+=file;//"file" <a>...</a> delim
             j++;
           }
-          if(ref!=null&&ref.equals(PERCENT))sub_str=this.replaceMacro(s,sp)+SPACE;//replace macro (%login,%password,%database)
-          else if(file==null)sub_str=s+SPACE;
+          if(ref!=null&&ref.equals(C.PERCENT))sub_str=this.replaceMacro(s,sp)+C.SPACE;//replace macro (%login,%password,%database)
+          else if(file==null)sub_str=s+C.SPACE;
         }
         else if(gdi.type==ITEM_TYPE_BYTES){//reference to bytes data (a,form,img) and url to saved file
           if(file!=null){//file->(file_list: filename1;filename2; ... filenameN;)
-            index=file.indexOf(POINT_COMA);
+            index=file.indexOf(C.POINT_COMA);
             if(index!=-1){//filename="filename1" file="filename2; ... filenameN;"
               filename=file.substring(0,index);
               if(index+1<file.length())file=file.substring(index+1);
-              else file=EMPTY;
+              else file=C.EMPTY;
             }else filename=file;
             if(gdi.bytesValue!=null&&gdi.bytesValue.length>0)url=this.saveAsFile(gdi.bytesValue,null,filename,FILEPATH_SERVICE_TRASH);
-            else url=EMPTY;
+            else url=C.EMPTY;
             // -> ...
-            if(ref.startsWith(HTML_ELEMENT_A)){
-              sub_str=CODE_OPEN+ref/*HTML_ELEMENT_A*/+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+CODE_CLOSE;//<a href="...">
-              sub_str+=(s.length()>0?s:EMPTY)+CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE;//...</a>
+            if(ref.startsWith(H.HTML_ELEMENT_A)){
+              sub_str=C.CODE_OPEN+ref/*H.HTML_ELEMENT_A*/+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.CODE_CLOSE;//<a href="...">
+              sub_str+=(s.length()>0?s:C.EMPTY)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE;//...</a>
             }
-            else if(ref.startsWith(HTML_ELEMENT_FORM)){
-              sub_str=CODE_OPEN+ref/*HTML_ELEMENT_FORM*/+SPACE+HTML_ELEMENT_FORM_ACTION+EQUAL+
-              DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+HTML_ELEMENT_FORM_METHOD+EQUAL+
-              DOUBLE_UPPER+HTML_ELEMENT_FORM_METHOD_GET+DOUBLE_UPPER+CODE_CLOSE;//<form action="..." method="get">
-              sub_str+=CODE_OPEN+HTML_ELEMENT_INPUT+SPACE+HTML_ELEMENT_INPUT_TYPE+EQUAL+
-              DOUBLE_UPPER+HTML_ELEMENT_INPUT_TYPE_SUBMIT+DOUBLE_UPPER+SPACE+HTML_ELEMENT_INPUT_VALUE+EQUAL+
-              DOUBLE_UPPER+(s.length()>0?s:EMPTY)+DOUBLE_UPPER+CODE_CLOSE;//<input type="submit" value="...">
-              sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_FORM+CODE_CLOSE;//</form>
+            else if(ref.startsWith(H.HTML_ELEMENT_FORM)){
+              sub_str=C.CODE_OPEN+ref/*H.HTML_ELEMENT_FORM*/+C.SPACE+H.HTML_ELEMENT_FORM_ACTION+C.EQUAL+
+              C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_FORM_METHOD+C.EQUAL+
+              C.DOUBLE_UPPER+H.HTML_ELEMENT_FORM_METHOD_GET+C.DOUBLE_UPPER+C.CODE_CLOSE;//<form action="..." method="get">
+              sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_INPUT+C.SPACE+H.HTML_ELEMENT_INPUT_TYPE+C.EQUAL+
+              C.DOUBLE_UPPER+H.HTML_ELEMENT_INPUT_TYPE_SUBMIT+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+
+              C.DOUBLE_UPPER+(s.length()>0?s:C.EMPTY)+C.DOUBLE_UPPER+C.CODE_CLOSE;//<input type="submit" value="...">
+              sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_FORM+C.CODE_CLOSE;//</form>
             }
-            else if(ref.startsWith(HTML_ELEMENT_IMG)){
-              sub_str=CODE_OPEN+HTML_ELEMENT_A+SPACE+HTML_ELEMENT_A_HREF+EQUAL+
-              DOUBLE_UPPER+(s.length()>0?s:EMPTY)+DOUBLE_UPPER+CODE_CLOSE;//<a href="...">...
-              sub_str+=(url.length()>0?CODE_OPEN+ref/*HTML_ELEMENT_IMG*/+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+//...<img src="...">
-              HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE:s)+
-              CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE;//...</a>
+            else if(ref.startsWith(H.HTML_ELEMENT_IMG)){
+              sub_str=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+
+              C.DOUBLE_UPPER+(s.length()>0?s:C.EMPTY)+C.DOUBLE_UPPER+C.CODE_CLOSE;//<a href="...">...
+              sub_str+=(url.length()>0?C.CODE_OPEN+ref/*H.HTML_ELEMENT_IMG*/+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+//...<img src="...">
+              H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE:s)+
+              C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE;//...</a>
             }
           }//if file!=null
           else{//image file *.jpg
             if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
               url=this.saveAsImageFile(gdi.bytesValue,null);
-              sub_str=CODE_OPEN+HTML_ELEMENT_IMG+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+
-              HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE;
+              sub_str=C.CODE_OPEN+H.HTML_ELEMENT_IMG+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+
+              H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE;
             }
           }
         }
         str+=sub_str;
         //grid end
       }
-      str+=NEXT_LINE;
+      str+=C.NEXT_LINE;
     }
     return str;
   }
   private String getTableColumns(Vector list,String cols,ServletParam sp,boolean not_quot)
   {
-    String str=EMPTY,sub_str=EMPTY,url;
+    String str=C.EMPTY,sub_str=C.EMPTY,url;
     Vector sub_list;
     GridDataItem gdi;
     Vector table_cols=new Vector();
-    StringTokenizer st=new StringTokenizer(cols,POINT_COMA);//=Convert.getValues(cols,POINT_COMA);
+    StringTokenizer st=new StringTokenizer(cols,C.POINT_COMA);//=Convert.getValues(cols,C.POINT_COMA);
     while(st.hasMoreTokens())table_cols.add(st.nextToken().trim());
     String table_col;
     StringListItem item;
@@ -5119,25 +5126,25 @@ class HtmlResponse extends HtmlParse implements Interface
       else table_select.add(null);
     }
     if(list.size()==0){//empty first table row
-      str+=CODE_OPEN+HTML_ELEMENT_TABLE_TR+SPACE+HTML_ELEMENT_TABLE_VALIGN+EQUAL+DOUBLE_UPPER+HTML_ELEMENT_TABLE_VALIGN_CENTER+DOUBLE_UPPER+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TR+C.SPACE+H.HTML_ELEMENT_TABLE_VALIGN+C.EQUAL+C.DOUBLE_UPPER+H.HTML_ELEMENT_TABLE_VALIGN_CENTER+C.DOUBLE_UPPER+C.CODE_CLOSE+C.NEXT_LINE;
       //<td colspan="0">&nbsp;</td>
-      str+=CODE_OPEN+HTML_ELEMENT_TABLE_TD+SPACE+HTML_ELEMENT_TABLE_COLSPAN+EQUAL+DOUBLE_UPPER+table_cols.size()+DOUBLE_UPPER+CODE_CLOSE;
-      str+=NBSP;
-      str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;
-      str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TR+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TD+C.SPACE+H.HTML_ELEMENT_TABLE_COLSPAN+C.EQUAL+C.DOUBLE_UPPER+table_cols.size()+C.DOUBLE_UPPER+C.CODE_CLOSE;
+      str+=C.NBSP;
+      str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;
+      str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TR+C.CODE_CLOSE+C.NEXT_LINE;
     }
     else for(int i=0;i<list.size();i++){
-      str+=CODE_OPEN+HTML_ELEMENT_TABLE_TR+SPACE+HTML_ELEMENT_TABLE_VALIGN+EQUAL+DOUBLE_UPPER+HTML_ELEMENT_TABLE_VALIGN_CENTER+DOUBLE_UPPER+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TR+C.SPACE+H.HTML_ELEMENT_TABLE_VALIGN+C.EQUAL+C.DOUBLE_UPPER+H.HTML_ELEMENT_TABLE_VALIGN_CENTER+C.DOUBLE_UPPER+C.CODE_CLOSE+C.NEXT_LINE;
       sub_list=(Vector)list.elementAt(i);
       for(int j=0;j<sub_list.size();j++){
-        sub_str=CODE_OPEN+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;
-        if(j<table_cols.size())table_col=(String)table_cols.get(j);else table_col=EMPTY;
+        sub_str=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;
+        if(j<table_cols.size())table_col=(String)table_cols.get(j);else table_col=C.EMPTY;
         //Manager.getLog().write("TABLE_COL="+table_col+"\r\n");
         if(table_col.length()==0)sub_str+=(String)sub_list.elementAt(j);
-        else if(table_col.startsWith(HTML_ELEMENT_SELECT)){//<select>...</select> 2 cols
+        else if(table_col.startsWith(H.HTML_ELEMENT_SELECT)){//<select>...</select> 2 cols
           gdi=(GridDataItem)sub_list.elementAt(j);//1 col
           if(gdi.type==ITEM_TYPE_STRING){
-            String s=gdi.stringValue,s_gdi=EMPTY;
+            String s=gdi.stringValue,s_gdi=C.EMPTY;
             //Manager.getLog().write("SELECT_S="+s+"\r\n");
             v=(Vector)table_select.get(j);
             if(j+1<sub_list.size()){
@@ -5146,107 +5153,108 @@ class HtmlResponse extends HtmlParse implements Interface
               j=j+1;
             }
             //html code from file->select.html
-            sub_str+=CODE_OPEN+/*table_col*/HTML_ELEMENT_SELECT+SPACE+HTML_ELEMENT_ID+EQUAL+DOUBLE_UPPER+HTML_ELEMENT_SELECT+s_gdi+DOUBLE_UPPER+CODE_CLOSE;//<select id="selectId">
+            sub_str+=C.CODE_OPEN+/*table_col*/H.HTML_ELEMENT_SELECT+C.SPACE+H.HTML_ELEMENT_ID+C.EQUAL+C.DOUBLE_UPPER+H.HTML_ELEMENT_SELECT+s_gdi+C.DOUBLE_UPPER+C.CODE_CLOSE;//<select id="selectId">
             for(int z=0;z<v.size();z++){
               item=(StringListItem)v.elementAt(z);
               //html code from file->select_option.html
-              sub_str+=CODE_OPEN+HTML_ELEMENT_SELECT_OPTION+SPACE;//<option_
+              sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_SELECT_OPTION+C.SPACE;//<option_
               //Manager.getLog().write("SELECT_ITEM_ID="+item.id+"\r\n");
               //@selected->selected.html
-              if(item.id.equalsIgnoreCase(s))sub_str+=HTML_ELEMENT_SELECT_OPTION_SELECTED+SPACE;
-              sub_str+=HTML_ELEMENT_SELECT_OPTION_VALUE+EQUAL+DOUBLE_UPPER+item.id+DOUBLE_UPPER+CODE_CLOSE+item.value;
-              sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_SELECT_OPTION+CODE_CLOSE+NEXT_LINE;//</option>;
+              if(item.id.equalsIgnoreCase(s))sub_str+=H.HTML_ELEMENT_SELECT_OPTION_SELECTED+C.SPACE;
+              sub_str+=H.HTML_ELEMENT_SELECT_OPTION_VALUE+C.EQUAL+C.DOUBLE_UPPER+item.id+C.DOUBLE_UPPER+C.CODE_CLOSE+item.value;
+              sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_SELECT_OPTION+C.CODE_CLOSE+C.NEXT_LINE;//</option>;
             }
-            sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_SELECT+CODE_CLOSE;//</select>
+            sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_SELECT+C.CODE_CLOSE;//</select>
           }
         }
-        else if(table_col.startsWith(HTML_ELEMENT_INPUT_TYPE_TEXT)){//<input type="text" value="...">
+        else if(table_col.startsWith(H.HTML_ELEMENT_INPUT_TYPE_TEXT)){//<input type="text" value="...">
           //grid start
           gdi=(GridDataItem)sub_list.elementAt(j);
           if(gdi.type==ITEM_TYPE_STRING){//<input type="text" value="...">
-            sub_str+=CODE_OPEN+HTML_ELEMENT_INPUT+SPACE+HTML_ELEMENT_INPUT_TYPE+EQUAL+
-            DOUBLE_UPPER+HTML_ELEMENT_INPUT_TYPE_TEXT+DOUBLE_UPPER+SPACE+
-            HTML_ELEMENT_INPUT_VALUE+EQUAL+DOUBLE_UPPER+gdi.stringValue+DOUBLE_UPPER+SPACE+
-            HTML_ELEMENT_INPUT_SIZE+EQUAL+DOUBLE_UPPER+gdi.stringValue.length()+DOUBLE_UPPER+CODE_CLOSE;
+            sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_INPUT+C.SPACE+H.HTML_ELEMENT_INPUT_TYPE+C.EQUAL+
+            C.DOUBLE_UPPER+H.HTML_ELEMENT_INPUT_TYPE_TEXT+C.DOUBLE_UPPER+C.SPACE+
+            H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+C.DOUBLE_UPPER+gdi.stringValue+C.DOUBLE_UPPER+C.SPACE+
+            /*size="0" in tables float range!*/
+            /*H.HTML_ELEMENT_INPUT_SIZE+C.EQUAL+C.DOUBLE_UPPER+gdi.stringValue.length()+C.DOUBLE_UPPER+*/C.CODE_CLOSE;
           }
           else if(gdi.type==ITEM_TYPE_BYTES){//<img src="...">
             if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
               url=this.saveAsImageFile(gdi.bytesValue,null);
-              sub_str+=CODE_OPEN+HTML_ELEMENT_IMG+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+
-              HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE;
+              sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_IMG+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+
+              H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE;
             }
           }
           //grid end
         }
-        else if(table_col.startsWith(HTML_ELEMENT_INPUT_TYPE_CHECKBOX)){//<input type="checkbox" value="..." checked>
+        else if(table_col.startsWith(H.HTML_ELEMENT_INPUT_TYPE_CHECKBOX)){//<input type="checkbox" value="..." checked>
           gdi=(GridDataItem)sub_list.elementAt(j);
           if(gdi.type==ITEM_TYPE_STRING){//if value!="" checked
             String s=gdi.stringValue;
-            sub_str+=CODE_OPEN+HTML_ELEMENT_INPUT+SPACE+HTML_ELEMENT_INPUT_TYPE+EQUAL+
-            DOUBLE_UPPER+HTML_ELEMENT_INPUT_TYPE_CHECKBOX+DOUBLE_UPPER+SPACE+
-            HTML_ELEMENT_INPUT_VALUE+EQUAL+DOUBLE_UPPER+s+DOUBLE_UPPER+SPACE+
-            ((s.equals(EMPTY))?EMPTY:HTML_ELEMENT_INPUT_TYPE_CHECKBOX_CHECKED)+CODE_CLOSE;
+            sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_INPUT+C.SPACE+H.HTML_ELEMENT_INPUT_TYPE+C.EQUAL+
+            C.DOUBLE_UPPER+H.HTML_ELEMENT_INPUT_TYPE_CHECKBOX+C.DOUBLE_UPPER+C.SPACE+
+            H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+C.DOUBLE_UPPER+s+C.DOUBLE_UPPER+C.SPACE+
+            ((s.equals(C.EMPTY))?C.EMPTY:H.HTML_ELEMENT_INPUT_TYPE_CHECKBOX_CHECKED)+C.CODE_CLOSE;
           }
         }
-        else if(table_col.startsWith(HTML_ELEMENT_INPUT_TYPE_IMAGE)){//<input type="image">
+        else if(table_col.startsWith(H.HTML_ELEMENT_INPUT_TYPE_IMAGE)){//<input type="image">
           //grid start
           gdi=(GridDataItem)sub_list.elementAt(j);
           if(gdi.type==ITEM_TYPE_STRING)sub_str+=gdi.stringValue;
           else if(gdi.type==ITEM_TYPE_BYTES){
             if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
               url=this.saveAsImageFile(gdi.bytesValue,null);
-              sub_str+=CODE_OPEN+HTML_ELEMENT_INPUT+SPACE+HTML_ELEMENT_INPUT_TYPE+EQUAL+DOUBLE_UPPER+HTML_ELEMENT_INPUT_TYPE_IMAGE+DOUBLE_UPPER+SPACE+
-              HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+CODE_CLOSE;
+              sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_INPUT+C.SPACE+H.HTML_ELEMENT_INPUT_TYPE+C.EQUAL+C.DOUBLE_UPPER+H.HTML_ELEMENT_INPUT_TYPE_IMAGE+C.DOUBLE_UPPER+C.SPACE+
+              H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.CODE_CLOSE;
             }
           }
         }
-        else if(table_col.startsWith(HTML_ELEMENT_IMG)){//<img src="...">
+        else if(table_col.startsWith(H.HTML_ELEMENT_IMG)){//<img src="...">
           //grid start
           gdi=(GridDataItem)sub_list.elementAt(j);
           if(gdi.type==ITEM_TYPE_STRING)sub_str+=gdi.stringValue;
           else if(gdi.type==ITEM_TYPE_BYTES){
             if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
               url=this.saveAsImageFile(gdi.bytesValue,null);
-              sub_str+=CODE_OPEN+table_col/*HTML_ELEMENT_IMG*/+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+
-              HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE;
+              sub_str+=C.CODE_OPEN+table_col/*H.HTML_ELEMENT_IMG*/+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+
+              H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE;
             }
           }
           //grid end
         }
-        else if(table_col.startsWith(HTML_ELEMENT_A)){//<a href="...">...</a> 2 cols
+        else if(table_col.startsWith(H.HTML_ELEMENT_A)){//<a href="...">...</a> 2 cols
           //grid start
           gdi=(GridDataItem)sub_list.elementAt(j);//1 col
           gdi.stringValue=this.replaceMacro(gdi.stringValue,sp);//replace macro (%login,%password,%database)
-          sub_str+=CODE_OPEN+table_col/*HTML_ELEMENT_A*/+SPACE+HTML_ELEMENT_A_HREF+EQUAL+
-          DOUBLE_UPPER+(gdi.stringValue.startsWith(HTML_ELEMENT_JAVASCRIPT)?gdi.stringValue:this.encode(gdi.stringValue,not_quot)/*URL encode*/)+DOUBLE_UPPER+CODE_CLOSE;
+          sub_str+=C.CODE_OPEN+table_col/*H.HTML_ELEMENT_A*/+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+
+          C.DOUBLE_UPPER+(gdi.stringValue.startsWith(H.HTML_ELEMENT_JAVASCRIPT)?gdi.stringValue:this.encode(gdi.stringValue,not_quot)/*URL encode*/)+C.DOUBLE_UPPER+C.CODE_CLOSE;
           if(j+1<sub_list.size()){//size control
             gdi=(GridDataItem)sub_list.elementAt(j+1);//2 col
             if(gdi.type==ITEM_TYPE_STRING)sub_str+=gdi.stringValue;
             else if(gdi.type==ITEM_TYPE_BYTES){
               if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
                 url=this.saveAsImageFile(gdi.bytesValue,null);
-                sub_str+=CODE_OPEN+HTML_ELEMENT_IMG+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+
-                HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE;
+                sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_IMG+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+
+                H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE;
               }
             }
             j=j+1;
           }
-          sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE;
+          sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE;
           //grid end
         }
-        else if(table_col.startsWith(HTML_ELEMENT_FORM)){//<form ...> ... </form> 3 cols
+        else if(table_col.startsWith(H.HTML_ELEMENT_FORM)){//<form ...> ... </form> 3 cols
           //grid start
           gdi=(GridDataItem)sub_list.elementAt(j);//1 col
           String ext=gdi.stringValue;//may be a full path
-          if(ext.startsWith(HTML_ELEMENT_JAVASCRIPT)||ext.contains(POINT)){//</form> 2 cols (action="javascript:"||action=path)
-            sub_str+=CODE_OPEN+table_col/*HTML_ELEMENT_FORM*/+SPACE+HTML_ELEMENT_FORM_ACTION+EQUAL+
-            DOUBLE_UPPER+ext+DOUBLE_UPPER+SPACE+HTML_ELEMENT_FORM_METHOD+EQUAL+
-            DOUBLE_UPPER+HTML_ELEMENT_FORM_METHOD_GET+DOUBLE_UPPER+CODE_CLOSE;
+          if(ext.startsWith(H.HTML_ELEMENT_JAVASCRIPT)||ext.contains(C.POINT)){//</form> 2 cols (action="javascript:"||action=path)
+            sub_str+=C.CODE_OPEN+table_col/*H.HTML_ELEMENT_FORM*/+C.SPACE+H.HTML_ELEMENT_FORM_ACTION+C.EQUAL+
+            C.DOUBLE_UPPER+ext+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_FORM_METHOD+C.EQUAL+
+            C.DOUBLE_UPPER+H.HTML_ELEMENT_FORM_METHOD_GET+C.DOUBLE_UPPER+C.CODE_CLOSE;
             if(j+1<sub_list.size()){
               gdi=(GridDataItem)sub_list.elementAt(j+1);//2 col
-              sub_str+=CODE_OPEN+HTML_ELEMENT_INPUT+SPACE+HTML_ELEMENT_INPUT_TYPE+EQUAL+
-              DOUBLE_UPPER+HTML_ELEMENT_INPUT_TYPE_SUBMIT+DOUBLE_UPPER+SPACE+HTML_ELEMENT_INPUT_VALUE+EQUAL+
-              DOUBLE_UPPER+gdi.stringValue+DOUBLE_UPPER+CODE_CLOSE;//<input type="submit" value="...">
+              sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_INPUT+C.SPACE+H.HTML_ELEMENT_INPUT_TYPE+C.EQUAL+
+              C.DOUBLE_UPPER+H.HTML_ELEMENT_INPUT_TYPE_SUBMIT+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+
+              C.DOUBLE_UPPER+gdi.stringValue+C.DOUBLE_UPPER+C.CODE_CLOSE;//<input type="submit" value="...">
             }
             j=j+1;
           }
@@ -5254,40 +5262,40 @@ class HtmlResponse extends HtmlParse implements Interface
             gdi=(GridDataItem)sub_list.elementAt(j+2);//3 col
             if(gdi.type==ITEM_TYPE_BYTES){//<form action="..." method="get">
               if(gdi.bytesValue!=null&&gdi.bytesValue.length>0)url=this.saveAsFile(gdi.bytesValue,null,ext,FILEPATH_SERVICE_TRASH);
-              else url=EMPTY;
-              sub_str+=CODE_OPEN+table_col/*HTML_ELEMENT_FORM*/+SPACE+HTML_ELEMENT_FORM_ACTION+EQUAL+
-              DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+HTML_ELEMENT_FORM_METHOD+EQUAL+
-              DOUBLE_UPPER+HTML_ELEMENT_FORM_METHOD_GET+DOUBLE_UPPER+CODE_CLOSE;
+              else url=C.EMPTY;
+              sub_str+=C.CODE_OPEN+table_col/*H.HTML_ELEMENT_FORM*/+C.SPACE+H.HTML_ELEMENT_FORM_ACTION+C.EQUAL+
+              C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_FORM_METHOD+C.EQUAL+
+              C.DOUBLE_UPPER+H.HTML_ELEMENT_FORM_METHOD_GET+C.DOUBLE_UPPER+C.CODE_CLOSE;
             }
             gdi=(GridDataItem)sub_list.elementAt(j+1);//2 col
-            sub_str+=CODE_OPEN+HTML_ELEMENT_INPUT+SPACE+HTML_ELEMENT_INPUT_TYPE+EQUAL+
-            DOUBLE_UPPER+HTML_ELEMENT_INPUT_TYPE_SUBMIT+DOUBLE_UPPER+SPACE+HTML_ELEMENT_INPUT_VALUE+EQUAL+
-            DOUBLE_UPPER+gdi.stringValue+DOUBLE_UPPER+CODE_CLOSE;//<input type="submit" value="...">
+            sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_INPUT+C.SPACE+H.HTML_ELEMENT_INPUT_TYPE+C.EQUAL+
+            C.DOUBLE_UPPER+H.HTML_ELEMENT_INPUT_TYPE_SUBMIT+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_INPUT_VALUE+C.EQUAL+
+            C.DOUBLE_UPPER+gdi.stringValue+C.DOUBLE_UPPER+C.CODE_CLOSE;//<input type="submit" value="...">
             j=j+2;
           }
-          sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_FORM+CODE_CLOSE;//</form>
+          sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_FORM+C.CODE_CLOSE;//</form>
           //grid end
         }
         else{
           //grid start
           gdi=(GridDataItem)sub_list.elementAt(j);
           if(gdi.type==ITEM_TYPE_STRING){
-            if(table_col.equals(PERCENT))sub_str+=this.replaceMacro(gdi.stringValue,sp);//replace macro (%login,%password,%database)
+            if(table_col.equals(C.PERCENT))sub_str+=this.replaceMacro(gdi.stringValue,sp);//replace macro (%login,%password,%database)
             else sub_str+=gdi.stringValue;
           }
           else if(gdi.type==ITEM_TYPE_BYTES){
             if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
               url=this.saveAsImageFile(gdi.bytesValue,null);
-              sub_str+=CODE_OPEN+HTML_ELEMENT_IMG+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+
-              HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE;
+              sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_IMG+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+
+              H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE;
             }
           }
           //grid end
         }
-        sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;
+        sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;
         str+=sub_str;
       }
-      str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TR+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TR+C.CODE_CLOSE+C.NEXT_LINE;
     }
     table_cols.clear();table_cols=null;
     table_select.clear();table_select=null;
@@ -5295,47 +5303,47 @@ class HtmlResponse extends HtmlParse implements Interface
   }
   private String getTableColumns(Vector list,int col_count)
   {
-    String str=EMPTY,sub_str=EMPTY,url;
+    String str=C.EMPTY,sub_str=C.EMPTY,url;
     Vector sub_list;
     GridDataItem gdi;
     if(list.size()==0){//empty first table row
-      str+=CODE_OPEN+HTML_ELEMENT_TABLE_TR+SPACE+HTML_ELEMENT_TABLE_VALIGN+EQUAL+DOUBLE_UPPER+HTML_ELEMENT_TABLE_VALIGN_CENTER+DOUBLE_UPPER+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TR+C.SPACE+H.HTML_ELEMENT_TABLE_VALIGN+C.EQUAL+C.DOUBLE_UPPER+H.HTML_ELEMENT_TABLE_VALIGN_CENTER+C.DOUBLE_UPPER+C.CODE_CLOSE+C.NEXT_LINE;
       //<td colspan="0">&nbsp;</td>
-      str+=CODE_OPEN+HTML_ELEMENT_TABLE_TD+SPACE+HTML_ELEMENT_TABLE_COLSPAN+EQUAL+DOUBLE_UPPER+col_count+DOUBLE_UPPER+CODE_CLOSE;
-      str+=NBSP;
-      str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;
-      str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TR+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TD+C.SPACE+H.HTML_ELEMENT_TABLE_COLSPAN+C.EQUAL+C.DOUBLE_UPPER+col_count+C.DOUBLE_UPPER+C.CODE_CLOSE;
+      str+=C.NBSP;
+      str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;
+      str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TR+C.CODE_CLOSE+C.NEXT_LINE;
     }
     else for(int i=0;i<list.size();i++){
-      str+=CODE_OPEN+HTML_ELEMENT_TABLE_TR+SPACE+HTML_ELEMENT_TABLE_VALIGN+EQUAL+DOUBLE_UPPER+HTML_ELEMENT_TABLE_VALIGN_CENTER+DOUBLE_UPPER+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TR+C.SPACE+H.HTML_ELEMENT_TABLE_VALIGN+C.EQUAL+C.DOUBLE_UPPER+H.HTML_ELEMENT_TABLE_VALIGN_CENTER+C.DOUBLE_UPPER+C.CODE_CLOSE+C.NEXT_LINE;
       sub_list=(Vector)list.elementAt(i);
       for(int j=0;j<sub_list.size();j++){
-        sub_str=CODE_OPEN+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;
+        sub_str=C.CODE_OPEN+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;
         //grid start
         gdi=(GridDataItem)sub_list.elementAt(j);
         if(gdi.type==ITEM_TYPE_STRING)sub_str+=gdi.stringValue;
         else if(gdi.type==ITEM_TYPE_BYTES){
           if(gdi.bytesValue!=null&&gdi.bytesValue.length>0){//file buffer length>0
             url=this.saveAsImageFile(gdi.bytesValue,null);
-            sub_str+=CODE_OPEN+HTML_ELEMENT_IMG+SPACE+HTML_ELEMENT_IMG_SRC+EQUAL+DOUBLE_UPPER+url+DOUBLE_UPPER+SPACE+
-            HTML_ELEMENT_IMG_ALT+EQUAL+DOUBLE_UPPER+DOUBLE_UPPER+CODE_CLOSE;
+            sub_str+=C.CODE_OPEN+H.HTML_ELEMENT_IMG+C.SPACE+H.HTML_ELEMENT_IMG_SRC+C.EQUAL+C.DOUBLE_UPPER+url+C.DOUBLE_UPPER+C.SPACE+
+            H.HTML_ELEMENT_IMG_ALT+C.EQUAL+C.DOUBLE_UPPER+C.DOUBLE_UPPER+C.CODE_CLOSE;
           }
         }
         //grid end
-        sub_str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TD+CODE_CLOSE;
+        sub_str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TD+C.CODE_CLOSE;
         str+=sub_str;
       }
-      str+=CODE_OPEN+SLASH+HTML_ELEMENT_TABLE_TR+CODE_CLOSE+NEXT_LINE;
+      str+=C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_TABLE_TR+C.CODE_CLOSE+C.NEXT_LINE;
     }
     return str;
   }
   //QueryString->"name=value&&pagemarker=1&&pagenumber=1" || queryString->"name=value&pagemarker=1&pagenumber=1"
   private String removeFromQueryString(String query_str,String remove_str)//remove string with "&&" or "&"
   {
-    int index_1=query_str.indexOf(remove_str+EQUAL),index_2;
+    int index_1=query_str.indexOf(remove_str+C.EQUAL),index_2;
     if(index_1>-1){
       int query_length=query_str.length();
-      index_2=query_str.indexOf(AND,index_1);//"&"
+      index_2=query_str.indexOf(C.AND,index_1);//"&"
       if(index_2==-1){//remove_str on query_str end
         while(index_1>0&&query_str.charAt(--index_1)=='&');//move index_1 to begin and left '&'
         query_str=query_str.substring(0,index_1+1);//remove
@@ -5343,14 +5351,14 @@ class HtmlResponse extends HtmlParse implements Interface
       else{ //remove_str on middle of query_str
         index_2++;
         while(index_2<query_length&&query_str.charAt(index_2)=='&')index_2++;//move index_2 to end and left '&'
-        query_str=(index_1>0?query_str.substring(0,index_1):EMPTY)+(index_2<query_length?query_str.substring(index_2):EMPTY);
+        query_str=(index_1>0?query_str.substring(0,index_1):C.EMPTY)+(index_2<query_length?query_str.substring(index_2):C.EMPTY);
       }
     }
     return query_str;
   }
   private String getPages(ServletParam sp,int page_number,int page_count,int row_count,int total_row_count,boolean not_quot)
   {
-    String ret_val=EMPTY;
+    String ret_val=C.EMPTY;
     String query_str=this.encode(sp.queryString,not_quot)/*URL encode*/;
     String page_func=sp.pageOnclick;//if use->onClick
     String page_href=sp.pageHref;//if use function->set href=pageHref
@@ -5372,49 +5380,49 @@ class HtmlResponse extends HtmlParse implements Interface
     else page_start_number=page_number;
     query_str=this.removeFromQueryString(query_str,SERVICE_SQL);//remove 'sql' if exist
     int total_pages_count=total_row_count/row_count+(total_row_count%row_count>0?1:0),last_page_number=/*!*/page_start_number+page_count-1;
-    ret_val+=(is_current_class?EMPTY:VERT_SLASH)+SPACE;
+    ret_val+=(is_current_class?C.EMPTY:C.VERT_SLASH)+C.SPACE;
     if(/*!*/page_start_number>1){//set link prev pages
       int page_index=/*!*/page_start_number-page_count;
       if(page_index<1)page_index=1;
-      ret_val+=CODE_OPEN+HTML_ELEMENT_A+SPACE+(sp.pageParam!=null?sp.pageParam+SPACE:EMPTY)+
-      (page_func!=null?HTML_ELEMENT_A_ONCLICK+EQUAL+DOUBLE_UPPER+page_func+OPEN+UPPER:HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER)+
-      sp.requestURL+REQUEST_SYMBOL+query_str+REQUEST_DELIM+
-      (is_marker?SERVICE_PAGE_MARKER+EQUAL+Convert.toString(page_index)+REQUEST_DELIM:EMPTY)+
-      SERVICE_PAGE_NUMBER+EQUAL+Convert.toString(page_index)+
-      (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:EMPTY)+
-      (page_func!=null?UPPER+CLOSE+DOUBLE_UPPER+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+(page_href!=null?page_href:EMPTY)+DOUBLE_UPPER:DOUBLE_UPPER)+
-      (is_class?SPACE+HTML_ELEMENT_A_CLASS+EQUAL+DOUBLE_UPPER+sp.pageClass+DOUBLE_UPPER:EMPTY)+
-      (is_title?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+sp.pageTitle+DOUBLE_UPPER:EMPTY)+CODE_CLOSE+
-      (page_prev!=null?page_prev:PREV_2_LT)+CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE+SPACE;
+      ret_val+=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+(sp.pageParam!=null?sp.pageParam+C.SPACE:C.EMPTY)+
+      (page_func!=null?H.HTML_ELEMENT_A_ONCLICK+C.EQUAL+C.DOUBLE_UPPER+page_func+C.OPEN+C.UPPER:H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER)+
+      sp.requestURL+C.REQUEST_SYMBOL+query_str+REQUEST_DELIM+
+      (is_marker?SERVICE_PAGE_MARKER+C.EQUAL+Convert.toString(page_index)+REQUEST_DELIM:C.EMPTY)+
+      SERVICE_PAGE_NUMBER+C.EQUAL+Convert.toString(page_index)+
+      (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:C.EMPTY)+
+      (page_func!=null?C.UPPER+C.CLOSE+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+(page_href!=null?page_href:C.EMPTY)+C.DOUBLE_UPPER:C.DOUBLE_UPPER)+
+      (is_class?C.SPACE+H.HTML_ELEMENT_A_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageClass+C.DOUBLE_UPPER:C.EMPTY)+
+      (is_title?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+sp.pageTitle+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE+
+      (page_prev!=null?page_prev:C.PREV_2_LT)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE+C.SPACE;
     }
     //STYLE Numeric: | << 1 2 >> |
     if(sp.pageStyle==null||sp.pageStyle.equalsIgnoreCase(SERVICE_PAGE_STYLE_NUMERIC)){
       for(int i=/*!*/page_start_number;i<page_number;i++){//link pages
-        ret_val+=CODE_OPEN+HTML_ELEMENT_A+SPACE+(sp.pageParam!=null?sp.pageParam+SPACE:EMPTY)+
-        (page_func!=null?HTML_ELEMENT_A_ONCLICK+EQUAL+DOUBLE_UPPER+page_func+OPEN+UPPER:HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER)+
-        sp.requestURL+REQUEST_SYMBOL+query_str+REQUEST_DELIM+
-        (is_marker?SERVICE_PAGE_MARKER+EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:EMPTY)+
-        SERVICE_PAGE_NUMBER+EQUAL+Convert.toString(i)+
-        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:EMPTY)+
-        (page_func!=null?UPPER+CLOSE+DOUBLE_UPPER+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+(page_href!=null?page_href:EMPTY)+DOUBLE_UPPER:DOUBLE_UPPER)+
-        (is_class?SPACE+HTML_ELEMENT_A_CLASS+EQUAL+DOUBLE_UPPER+sp.pageClass+DOUBLE_UPPER:EMPTY)+
-        (is_title?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+sp.pageTitle+DOUBLE_UPPER:EMPTY)+CODE_CLOSE+
-        Convert.toString(i)+CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE+SPACE;
+        ret_val+=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+(sp.pageParam!=null?sp.pageParam+C.SPACE:C.EMPTY)+
+        (page_func!=null?H.HTML_ELEMENT_A_ONCLICK+C.EQUAL+C.DOUBLE_UPPER+page_func+C.OPEN+C.UPPER:H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER)+
+        sp.requestURL+C.REQUEST_SYMBOL+query_str+REQUEST_DELIM+
+        (is_marker?SERVICE_PAGE_MARKER+C.EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:C.EMPTY)+
+        SERVICE_PAGE_NUMBER+C.EQUAL+Convert.toString(i)+
+        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:C.EMPTY)+
+        (page_func!=null?C.UPPER+C.CLOSE+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+(page_href!=null?page_href:C.EMPTY)+C.DOUBLE_UPPER:C.DOUBLE_UPPER)+
+        (is_class?C.SPACE+H.HTML_ELEMENT_A_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageClass+C.DOUBLE_UPPER:C.EMPTY)+
+        (is_title?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+sp.pageTitle+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE+
+        Convert.toString(i)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE+C.SPACE;
       }
-      ret_val+=(is_current_class?CODE_OPEN+HTML_ELEMENT_FONT+SPACE+HTML_ELEMENT_FONT_CLASS+EQUAL+DOUBLE_UPPER+sp.pageCurrentClass+DOUBLE_UPPER+CODE_CLOSE+Convert.toString(page_number)+CODE_OPEN+SLASH+HTML_ELEMENT_FONT+CODE_CLOSE:
-                Convert.toString(page_number))+SPACE;//view pages
+      ret_val+=(is_current_class?C.CODE_OPEN+H.HTML_ELEMENT_FONT+C.SPACE+H.HTML_ELEMENT_FONT_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageCurrentClass+C.DOUBLE_UPPER+C.CODE_CLOSE+Convert.toString(page_number)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_FONT+C.CODE_CLOSE:
+                Convert.toString(page_number))+C.SPACE;//view pages
       int num=last_page_number-total_pages_count>0?total_pages_count:last_page_number;
       for(int i=(page_number+1);i<=num;i++){//link pages
-        ret_val+=CODE_OPEN+HTML_ELEMENT_A+SPACE+(sp.pageParam!=null?sp.pageParam+SPACE:EMPTY)+
-        (page_func!=null?HTML_ELEMENT_A_ONCLICK+EQUAL+DOUBLE_UPPER+page_func+OPEN+UPPER:HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER)+
-        sp.requestURL+REQUEST_SYMBOL+query_str+REQUEST_DELIM+
-        (is_marker?SERVICE_PAGE_MARKER+EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:EMPTY)+
-        SERVICE_PAGE_NUMBER+EQUAL+Convert.toString(i)+
-        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:EMPTY)+
-        (page_func!=null?UPPER+CLOSE+DOUBLE_UPPER+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+(page_href!=null?page_href:EMPTY)+DOUBLE_UPPER:DOUBLE_UPPER)+
-        (is_class?SPACE+HTML_ELEMENT_A_CLASS+EQUAL+DOUBLE_UPPER+sp.pageClass+DOUBLE_UPPER:EMPTY)+
-        (is_title?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+sp.pageTitle+DOUBLE_UPPER:EMPTY)+CODE_CLOSE+
-        Convert.toString(i)+CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE+SPACE;
+        ret_val+=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+(sp.pageParam!=null?sp.pageParam+C.SPACE:C.EMPTY)+
+        (page_func!=null?H.HTML_ELEMENT_A_ONCLICK+C.EQUAL+C.DOUBLE_UPPER+page_func+C.OPEN+C.UPPER:H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER)+
+        sp.requestURL+C.REQUEST_SYMBOL+query_str+REQUEST_DELIM+
+        (is_marker?SERVICE_PAGE_MARKER+C.EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:C.EMPTY)+
+        SERVICE_PAGE_NUMBER+C.EQUAL+Convert.toString(i)+
+        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:C.EMPTY)+
+        (page_func!=null?C.UPPER+C.CLOSE+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+(page_href!=null?page_href:C.EMPTY)+C.DOUBLE_UPPER:C.DOUBLE_UPPER)+
+        (is_class?C.SPACE+H.HTML_ELEMENT_A_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageClass+C.DOUBLE_UPPER:C.EMPTY)+
+        (is_title?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+sp.pageTitle+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE+
+        Convert.toString(i)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE+C.SPACE;
       }
     }
     //STYLE Secuence: | << 1..100 101..200 >> |
@@ -5422,53 +5430,53 @@ class HtmlResponse extends HtmlParse implements Interface
       int val,last_val;
       for(int i=/*!*/page_start_number;i<page_number;i++){//link pages
         val=i*row_count;
-        ret_val+=CODE_OPEN+HTML_ELEMENT_A+SPACE+(sp.pageParam!=null?sp.pageParam+SPACE:EMPTY)+
-        (page_func!=null?HTML_ELEMENT_A_ONCLICK+EQUAL+DOUBLE_UPPER+page_func+OPEN+UPPER:HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER)+
-        sp.requestURL+REQUEST_SYMBOL+query_str+REQUEST_DELIM+
-        (is_marker?SERVICE_PAGE_MARKER+EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:EMPTY)+
-        SERVICE_PAGE_NUMBER+EQUAL+Convert.toString(i)+
-        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:EMPTY)+
-        (page_func!=null?UPPER+CLOSE+DOUBLE_UPPER+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+(page_href!=null?page_href:EMPTY)+DOUBLE_UPPER:DOUBLE_UPPER)+
-        (is_class?SPACE+HTML_ELEMENT_A_CLASS+EQUAL+DOUBLE_UPPER+sp.pageClass+DOUBLE_UPPER:EMPTY)+
-        (is_title?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+sp.pageTitle+DOUBLE_UPPER:EMPTY)+CODE_CLOSE+
-        Convert.toString(val-row_count+1)+DOUBLE_POINT+Convert.toString(val)+
-        CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE+SPACE;
+        ret_val+=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+(sp.pageParam!=null?sp.pageParam+C.SPACE:C.EMPTY)+
+        (page_func!=null?H.HTML_ELEMENT_A_ONCLICK+C.EQUAL+C.DOUBLE_UPPER+page_func+C.OPEN+C.UPPER:H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER)+
+        sp.requestURL+C.REQUEST_SYMBOL+query_str+REQUEST_DELIM+
+        (is_marker?SERVICE_PAGE_MARKER+C.EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:C.EMPTY)+
+        SERVICE_PAGE_NUMBER+C.EQUAL+Convert.toString(i)+
+        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:C.EMPTY)+
+        (page_func!=null?C.UPPER+C.CLOSE+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+(page_href!=null?page_href:C.EMPTY)+C.DOUBLE_UPPER:C.DOUBLE_UPPER)+
+        (is_class?C.SPACE+H.HTML_ELEMENT_A_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageClass+C.DOUBLE_UPPER:C.EMPTY)+
+        (is_title?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+sp.pageTitle+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE+
+        Convert.toString(val-row_count+1)+C.DOUBLE_POINT+Convert.toString(val)+
+        C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE+C.SPACE;
       }
       val=page_number*row_count;
       if(val>total_row_count)last_val=total_row_count;else last_val=val;
-      ret_val+=(is_current_class?CODE_OPEN+HTML_ELEMENT_FONT+SPACE+HTML_ELEMENT_FONT_CLASS+EQUAL+DOUBLE_UPPER+sp.pageCurrentClass+DOUBLE_UPPER+CODE_CLOSE+Convert.toString(val-row_count+1)+DOUBLE_POINT+Convert.toString(last_val)+CODE_OPEN+SLASH+HTML_ELEMENT_FONT+CODE_CLOSE:
-                Convert.toString(val-row_count+1)+DOUBLE_POINT+Convert.toString(last_val))+SPACE;//view pages
+      ret_val+=(is_current_class?C.CODE_OPEN+H.HTML_ELEMENT_FONT+C.SPACE+H.HTML_ELEMENT_FONT_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageCurrentClass+C.DOUBLE_UPPER+C.CODE_CLOSE+Convert.toString(val-row_count+1)+C.DOUBLE_POINT+Convert.toString(last_val)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_FONT+C.CODE_CLOSE:
+                Convert.toString(val-row_count+1)+C.DOUBLE_POINT+Convert.toString(last_val))+C.SPACE;//view pages
       int num=last_page_number-total_pages_count>0?total_pages_count:last_page_number;
       for(int i=(page_number+1);i<=num;i++){//link pages
         val=i*row_count;
         if(val>total_row_count)last_val=total_row_count;else last_val=val;
-        ret_val+=CODE_OPEN+HTML_ELEMENT_A+SPACE+(sp.pageParam!=null?sp.pageParam+SPACE:EMPTY)+
-        (page_func!=null?HTML_ELEMENT_A_ONCLICK+EQUAL+DOUBLE_UPPER+page_func+OPEN+UPPER:HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER)+
-        sp.requestURL+REQUEST_SYMBOL+query_str+REQUEST_DELIM+
-        (is_marker?SERVICE_PAGE_MARKER+EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:EMPTY)+
-        SERVICE_PAGE_NUMBER+EQUAL+Convert.toString(i)+
-        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:EMPTY)+
-        (page_func!=null?UPPER+CLOSE+DOUBLE_UPPER+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+(page_href!=null?page_href:EMPTY)+DOUBLE_UPPER:DOUBLE_UPPER)+
-        (is_class?SPACE+HTML_ELEMENT_A_CLASS+EQUAL+DOUBLE_UPPER+sp.pageClass+DOUBLE_UPPER:EMPTY)+
-        (is_title?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+sp.pageTitle+DOUBLE_UPPER:EMPTY)+CODE_CLOSE+
-        Convert.toString(val-row_count+1)+DOUBLE_POINT+Convert.toString(last_val)+
-        CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE+SPACE;
+        ret_val+=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+(sp.pageParam!=null?sp.pageParam+C.SPACE:C.EMPTY)+
+        (page_func!=null?H.HTML_ELEMENT_A_ONCLICK+C.EQUAL+C.DOUBLE_UPPER+page_func+C.OPEN+C.UPPER:H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER)+
+        sp.requestURL+C.REQUEST_SYMBOL+query_str+REQUEST_DELIM+
+        (is_marker?SERVICE_PAGE_MARKER+C.EQUAL+Convert.toString(page_start_number)+REQUEST_DELIM:C.EMPTY)+
+        SERVICE_PAGE_NUMBER+C.EQUAL+Convert.toString(i)+
+        (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:C.EMPTY)+
+        (page_func!=null?C.UPPER+C.CLOSE+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+(page_href!=null?page_href:C.EMPTY)+C.DOUBLE_UPPER:C.DOUBLE_UPPER)+
+        (is_class?C.SPACE+H.HTML_ELEMENT_A_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageClass+C.DOUBLE_UPPER:C.EMPTY)+
+        (is_title?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+sp.pageTitle+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE+
+        Convert.toString(val-row_count+1)+C.DOUBLE_POINT+Convert.toString(last_val)+
+        C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE+C.SPACE;
       }
     }
     count=/*!*/page_start_number+page_count;
     if(count<=total_pages_count){//set link next pages
-      ret_val+=CODE_OPEN+HTML_ELEMENT_A+SPACE+(sp.pageParam!=null?sp.pageParam+SPACE:EMPTY)+
-      (page_func!=null?HTML_ELEMENT_A_ONCLICK+EQUAL+DOUBLE_UPPER+page_func+OPEN+UPPER:HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER)+
-      sp.requestURL+REQUEST_SYMBOL+query_str+REQUEST_DELIM+
-      (is_marker?SERVICE_PAGE_MARKER+EQUAL+Convert.toString(count)+REQUEST_DELIM:EMPTY)+
-      SERVICE_PAGE_NUMBER+EQUAL+Convert.toString(count)+
-      (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:EMPTY)+
-      (page_func!=null?UPPER+CLOSE+DOUBLE_UPPER+SPACE+HTML_ELEMENT_A_HREF+EQUAL+DOUBLE_UPPER+(page_href!=null?page_href:EMPTY)+DOUBLE_UPPER:DOUBLE_UPPER)+
-      (is_class?SPACE+HTML_ELEMENT_A_CLASS+EQUAL+DOUBLE_UPPER+sp.pageClass+DOUBLE_UPPER:EMPTY)+
-      (is_title?SPACE+HTML_ELEMENT_A_TITLE+EQUAL+DOUBLE_UPPER+sp.pageTitle+DOUBLE_UPPER:EMPTY)+CODE_CLOSE+
-      (page_next!=null?page_next:NEXT_2_GT)+CODE_OPEN+SLASH+HTML_ELEMENT_A+CODE_CLOSE+SPACE;
+      ret_val+=C.CODE_OPEN+H.HTML_ELEMENT_A+C.SPACE+(sp.pageParam!=null?sp.pageParam+C.SPACE:C.EMPTY)+
+      (page_func!=null?H.HTML_ELEMENT_A_ONCLICK+C.EQUAL+C.DOUBLE_UPPER+page_func+C.OPEN+C.UPPER:H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER)+
+      sp.requestURL+C.REQUEST_SYMBOL+query_str+REQUEST_DELIM+
+      (is_marker?SERVICE_PAGE_MARKER+C.EQUAL+Convert.toString(count)+REQUEST_DELIM:C.EMPTY)+
+      SERVICE_PAGE_NUMBER+C.EQUAL+Convert.toString(count)+
+      (is_anchor?REQUEST_ANCHOR+sp.pageAnchor:C.EMPTY)+
+      (page_func!=null?C.UPPER+C.CLOSE+C.DOUBLE_UPPER+C.SPACE+H.HTML_ELEMENT_A_HREF+C.EQUAL+C.DOUBLE_UPPER+(page_href!=null?page_href:C.EMPTY)+C.DOUBLE_UPPER:C.DOUBLE_UPPER)+
+      (is_class?C.SPACE+H.HTML_ELEMENT_A_CLASS+C.EQUAL+C.DOUBLE_UPPER+sp.pageClass+C.DOUBLE_UPPER:C.EMPTY)+
+      (is_title?C.SPACE+H.HTML_ELEMENT_A_TITLE+C.EQUAL+C.DOUBLE_UPPER+sp.pageTitle+C.DOUBLE_UPPER:C.EMPTY)+C.CODE_CLOSE+
+      (page_next!=null?page_next:C.NEXT_2_GT)+C.CODE_OPEN+C.SLASH+H.HTML_ELEMENT_A+C.CODE_CLOSE+C.SPACE;
     }
-    ret_val+=(is_current_class?EMPTY:VERT_SLASH)+NEXT_LINE;
+    ret_val+=(is_current_class?C.EMPTY:C.VERT_SLASH)+C.NEXT_LINE;
     return ret_val;
   }
   //file=filename('file.xls') ref=pointer('sheet_name;1;12')->name of sheet;col;row
@@ -5560,22 +5568,22 @@ class HtmlResponse extends HtmlParse implements Interface
     Row r;//xls row
     Cell c;//xls cell
     //ref (3 position)
-    StringTokenizer st=new StringTokenizer(ref,POINT_COMA);//=Convert.getValues(ref,POINT_COMA);
+    StringTokenizer st=new StringTokenizer(ref,C.POINT_COMA);//=Convert.getValues(ref,C.POINT_COMA);
     if(st.hasMoreTokens())sheetname=st.nextToken().trim();//1
-    if(st.hasMoreTokens()){col=st.nextToken().trim();if(col.contains(DELIM_XLS_POS_COPY)){col=col.replaceAll(DELIM_XLS_POS_COPY,EMPTY);col_copy=true;}}//2
-    if(st.hasMoreTokens()){row=st.nextToken().trim();if(row.contains(DELIM_XLS_POS_COPY)){row=row.replaceAll(DELIM_XLS_POS_COPY,EMPTY);row_copy=true;}}//3
+    if(st.hasMoreTokens()){col=st.nextToken().trim();if(col.contains(DELIM_XLS_POS_COPY)){col=col.replaceAll(DELIM_XLS_POS_COPY,C.EMPTY);col_copy=true;}}//2
+    if(st.hasMoreTokens()){row=st.nextToken().trim();if(row.contains(DELIM_XLS_POS_COPY)){row=row.replaceAll(DELIM_XLS_POS_COPY,C.EMPTY);row_copy=true;}}//3
     st=null;
     if(col!=null&&col.length()>0)try{col_num=Convert.toIntValue(col);}catch(Exception e){}
     if(row!=null&&row.length()>0)try{row_num=Convert.toIntValue(row);}catch(Exception e){}
     //new filename format: <filename_SessionID.file_ext>
-    //old killed foramt: filename=Convert.toString(sessionID)+DOWN+file;
+    //old killed foramt: filename=Convert.toString(sessionID)+C.DOWN+file;
     int ind=file.lastIndexOf(LOCAL_DELIM_2);//kill subdirs if exists
     if(ind==-1)ind=file.lastIndexOf(LOCAL_DELIM);
     if(ind>-1)filename=file.substring(ind+1);
     else filename=file;
-    ind=filename.lastIndexOf(POINT);//add session_id before file_ext
-    if(ind>-1)filename=filename.substring(0,ind)+DOWN+Convert.toString(sessionID)+filename.substring(ind);
-    else filename=filename+DOWN+Convert.toString(sessionID);
+    ind=filename.lastIndexOf(C.POINT);//add session_id before file_ext
+    if(ind>-1)filename=filename.substring(0,ind)+C.DOWN+Convert.toString(sessionID)+filename.substring(ind);
+    else filename=filename+C.DOWN+Convert.toString(sessionID);
     //open xls result
     str=manager.getInitial().getServiceTrash();//ini service trash dir
     if(str!=null&&!str.endsWith(LOCAL_DELIM_2))str+=LOCAL_DELIM_2;
@@ -5600,7 +5608,7 @@ class HtmlResponse extends HtmlParse implements Interface
     //create xls data(book,sheet)
     if(wb==null)wb=new HSSFWorkbook();
     if(sheetname!=null)sheet=wb.getSheet(sheetname);
-    if(sheet==null)sheet=wb.createSheet(sheetname!=null?sheetname:EMPTY);
+    if(sheet==null)sheet=wb.createSheet(sheetname!=null?sheetname:C.EMPTY);
     //int sheet_index=wb.getSheetIndex(sheet);
     print=sheet.getPrintSetup();
     print.setLandscape(true);
@@ -5615,7 +5623,7 @@ class HtmlResponse extends HtmlParse implements Interface
       try{
         if(num2>=num1)sheet.shiftRows(num1,num2,pos);
         //Manager.getLog().write("SHIFT_ROWS: num1="+num1+" num2="+num2+"\r\n");
-      }catch(Exception e){manager.getLog().write(sessionID,WARNING_SESSION_EXCEPTION,e.toString()+SPACE+num1+SPACE+num2);}
+      }catch(Exception e){manager.getLog().write(sessionID,WARNING_SESSION_EXCEPTION,e.toString()+C.SPACE+num1+C.SPACE+num2);}
     }
     for(int i=0;i<list.size();i++){
       sub_list=(Vector)list.elementAt(i);
@@ -5654,7 +5662,7 @@ class HtmlResponse extends HtmlParse implements Interface
 //--------------------------------pagedata-------------------------------------//
 //starts page data from service page files ...
 //UNDER CONSTRUCTION
-class PageFormat implements Interface,tools.Interface,tools.HtmlInterface
+class PageFormat implements I
 {
   private Manager manager=null;
   private String aHref=null;
@@ -5708,7 +5716,7 @@ class PageFormat implements Interface,tools.Interface,tools.HtmlInterface
 }
 //--------------------------------initial-------------------------------------//
 //starts data from initial file ...
-class Initial implements Interface,tools.Interface
+class Initial implements I
 {
   private Manager manager=null;
   private boolean changed=false;//set TRUE if ini param changed by servlet
@@ -5822,11 +5830,11 @@ class Initial implements Interface,tools.Interface
           else if(line.equalsIgnoreCase(IGN_DATABASE))group_index=IGI_DATABASE;
           else if(line.equalsIgnoreCase(IGN_SERVICE))group_index=IGI_SERVICE;
         }
-        else while(!line.equals(EMPTY)){//group param
+        else while(!line.equals(C.EMPTY)){//group param
           param=Convert.getParam(line);
           value=Convert.getValue(line);
           if(group_index==IGI_LOCAL){
-            //if(param.startsWith(COMMENT)){LocalComments+=line+NEXT_LINE;break;}
+            //if(param.startsWith(COMMENT)){LocalComments+=line+C.NEXT_LINE;break;}
             if(param.equalsIgnoreCase(IPN_LOCAL_CODEPAGE)){localCodepage=value;break;}
             if(param.equalsIgnoreCase(IPN_LOCAL_CONTENT_TYPE)){localContentType=value;break;}
             if(param.equalsIgnoreCase(IPN_LOCAL_ADDRESS)){localAddress=value;break;}
@@ -5838,7 +5846,7 @@ class Initial implements Interface,tools.Interface
             break;
           }
           if(group_index==IGI_DATABASE){
-            //if(param.startsWith(COMMENT)){DatabaseComments+=line+NEXT_LINE;break;}
+            //if(param.startsWith(COMMENT)){DatabaseComments+=line+C.NEXT_LINE;break;}
             if(param.equalsIgnoreCase(IPN_DATABASE_PRIMARY_ADDRESS)){databasePrimaryAddress=value;break;}
             if(param.equalsIgnoreCase(IPN_DATABASE_SECONDARY_ADDRESS)){databaseSecondaryAddress=value;break;}
             if(param.equalsIgnoreCase(IPN_DATABASE_LOG)){databaseLog=value;break;}
@@ -5860,7 +5868,7 @@ class Initial implements Interface,tools.Interface
             break;
           }
           if(group_index==IGI_SERVICE){
-            //if(param.startsWith(COMMENT)){ServiceComments+=line+NEXT_LINE;break;}
+            //if(param.startsWith(COMMENT)){ServiceComments+=line+C.NEXT_LINE;break;}
             if(param.equalsIgnoreCase(IPN_SERVICE_TEMPLATES)){serviceTemplates=value;break;}
             if(param.equalsIgnoreCase(IPN_SERVICE_PAGES)){servicePages=value;break;}
             if(param.equalsIgnoreCase(IPN_SERVICE_TRASH)){serviceTrash=value;break;}
@@ -5871,7 +5879,7 @@ class Initial implements Interface,tools.Interface
             }
             break;
           }
-          //if(param.startsWith(COMMENT))HeaderComments+=line+NEXT_LINE;
+          //if(param.startsWith(COMMENT))HeaderComments+=line+C.NEXT_LINE;
           break;
         }//end while
         line=file_stream.readLine();
@@ -5888,50 +5896,50 @@ class Initial implements Interface,tools.Interface
   public void close()
   {
     if(changed){//save param in new ini file
-      String str=EMPTY,s/*temp string*/;
-      str+=INI_GROUP_NAME_OPEN+IGN_LOCAL+INI_GROUP_NAME_CLOSE+NEXT_LINE;
-      str+=IPN_LOCAL_CODEPAGE+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localCodepage==null?EMPTY:localCodepage)+NEXT_LINE;
-      str+=IPN_LOCAL_CONTENT_TYPE+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localContentType==null?EMPTY:localContentType)+NEXT_LINE;
-      str+=IPN_LOCAL_ADDRESS+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localAddress==null?EMPTY:localAddress)+NEXT_LINE;
-      str+=IPN_LOCAL_USER+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localUser==null?EMPTY:localUser)+NEXT_LINE;
-      str+=IPN_LOCAL_PASSWORD+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localPassword==null?EMPTY:localPassword)+NEXT_LINE;
-      str+=IPN_LOCAL_LOG+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localLog==null?EMPTY:localLog)+NEXT_LINE;
-      str+=IPN_LOCAL_DEBUG+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localDebug==null?EMPTY:localDebug)+NEXT_LINE;
-      str+=IPN_LOCAL_TIMEOUT+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(localTimeout==null?EMPTY:localTimeout)+NEXT_LINE;
-      str+=NEXT_LINE;
-      str+=INI_GROUP_NAME_OPEN+IGN_DATABASE+INI_GROUP_NAME_CLOSE+NEXT_LINE;
-      str+=IPN_DATABASE_PRIMARY_ADDRESS+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databasePrimaryAddress==null?EMPTY:databasePrimaryAddress)+NEXT_LINE;
-      str+=IPN_DATABASE_SECONDARY_ADDRESS+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseSecondaryAddress==null?EMPTY:databaseSecondaryAddress)+NEXT_LINE;
-      str+=IPN_DATABASE_DRIVER+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseDriver==null?EMPTY:databaseDriver)+NEXT_LINE;
-      str+=IPN_DATABASE_LOG+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseLog==null?EMPTY:databaseLog)+NEXT_LINE;
-      str+=IPN_DATABASE_COOKIE+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseCookie==null?EMPTY:databaseCookie)+NEXT_LINE;
-      str+=IPN_DATABASE_TIMEOUT+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseTimeout==null?EMPTY:databaseTimeout)+NEXT_LINE;
-      str+=IPN_DATABASE_PASSWORD+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databasePassword==null?EMPTY:databasePassword)+NEXT_LINE;
+      String str=C.EMPTY,s/*temp string*/;
+      str+=INI_GROUP_NAME_OPEN+IGN_LOCAL+INI_GROUP_NAME_CLOSE+C.NEXT_LINE;
+      str+=IPN_LOCAL_CODEPAGE+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localCodepage==null?C.EMPTY:localCodepage)+C.NEXT_LINE;
+      str+=IPN_LOCAL_CONTENT_TYPE+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localContentType==null?C.EMPTY:localContentType)+C.NEXT_LINE;
+      str+=IPN_LOCAL_ADDRESS+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localAddress==null?C.EMPTY:localAddress)+C.NEXT_LINE;
+      str+=IPN_LOCAL_USER+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localUser==null?C.EMPTY:localUser)+C.NEXT_LINE;
+      str+=IPN_LOCAL_PASSWORD+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localPassword==null?C.EMPTY:localPassword)+C.NEXT_LINE;
+      str+=IPN_LOCAL_LOG+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localLog==null?C.EMPTY:localLog)+C.NEXT_LINE;
+      str+=IPN_LOCAL_DEBUG+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localDebug==null?C.EMPTY:localDebug)+C.NEXT_LINE;
+      str+=IPN_LOCAL_TIMEOUT+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(localTimeout==null?C.EMPTY:localTimeout)+C.NEXT_LINE;
+      str+=C.NEXT_LINE;
+      str+=INI_GROUP_NAME_OPEN+IGN_DATABASE+INI_GROUP_NAME_CLOSE+C.NEXT_LINE;
+      str+=IPN_DATABASE_PRIMARY_ADDRESS+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databasePrimaryAddress==null?C.EMPTY:databasePrimaryAddress)+C.NEXT_LINE;
+      str+=IPN_DATABASE_SECONDARY_ADDRESS+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseSecondaryAddress==null?C.EMPTY:databaseSecondaryAddress)+C.NEXT_LINE;
+      str+=IPN_DATABASE_DRIVER+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseDriver==null?C.EMPTY:databaseDriver)+C.NEXT_LINE;
+      str+=IPN_DATABASE_LOG+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseLog==null?C.EMPTY:databaseLog)+C.NEXT_LINE;
+      str+=IPN_DATABASE_COOKIE+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseCookie==null?C.EMPTY:databaseCookie)+C.NEXT_LINE;
+      str+=IPN_DATABASE_TIMEOUT+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseTimeout==null?C.EMPTY:databaseTimeout)+C.NEXT_LINE;
+      str+=IPN_DATABASE_PASSWORD+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databasePassword==null?C.EMPTY:databasePassword)+C.NEXT_LINE;
       if(databaseUsersList!=null&&databaseUsersList.size()>0){
         Enumeration e=databaseUsersList.elements();
         while(e.hasMoreElements()){
           s=(String)e.nextElement();
-          str+=IPN_DATABASE_USER+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(s==null?EMPTY:s)+NEXT_LINE;
+          str+=IPN_DATABASE_USER+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(s==null?C.EMPTY:s)+C.NEXT_LINE;
         }
       }
-      str+=IPN_DATABASE_USERS+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseUsers==null?EMPTY:databaseUsers)+NEXT_LINE;
-      str+=IPN_DATABASE_SESSIONS_COUNT+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseSessionsCount==null?EMPTY:databaseSessionsCount)+NEXT_LINE;
-      str+=IPN_DATABASE_SESSIONS_TIMEOUT+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseSessionsTimeout==null?EMPTY:databaseSessionsTimeout)+NEXT_LINE;
-      str+=IPN_DATABASE_BLACKLIST+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseBlackList==null?EMPTY:databaseBlackList)+NEXT_LINE;
-      str+=IPN_DATABASE_BLACKLIST_COUNT+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseBlackListCount==null?EMPTY:databaseBlackListCount)+NEXT_LINE;
-      str+=IPN_DATABASE_BLACKLIST_TIMEOUT+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseBlackListTimeout==null?EMPTY:databaseBlackListTimeout)+NEXT_LINE;
-      str+=IPN_DATABASE_VALID_CONNECTION+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(databaseValidConnection==null?EMPTY:databaseValidConnection)+NEXT_LINE;
-      str+=NEXT_LINE;
-      str+=INI_GROUP_NAME_OPEN+IGN_SERVICE+INI_GROUP_NAME_CLOSE+NEXT_LINE;
-      str+=IPN_SERVICE_TEMPLATES+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(serviceTemplates==null?EMPTY:serviceTemplates)+NEXT_LINE;
-      str+=IPN_SERVICE_PAGES+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(servicePages==null?EMPTY:servicePages)+NEXT_LINE;
-      str+=IPN_SERVICE_TRASH+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(serviceTrash==null?EMPTY:serviceTrash)+NEXT_LINE;
-      str+=IPN_SERVICE_FILES+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(serviceFiles==null?EMPTY:serviceFiles)+NEXT_LINE;
+      str+=IPN_DATABASE_USERS+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseUsers==null?C.EMPTY:databaseUsers)+C.NEXT_LINE;
+      str+=IPN_DATABASE_SESSIONS_COUNT+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseSessionsCount==null?C.EMPTY:databaseSessionsCount)+C.NEXT_LINE;
+      str+=IPN_DATABASE_SESSIONS_TIMEOUT+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseSessionsTimeout==null?C.EMPTY:databaseSessionsTimeout)+C.NEXT_LINE;
+      str+=IPN_DATABASE_BLACKLIST+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseBlackList==null?C.EMPTY:databaseBlackList)+C.NEXT_LINE;
+      str+=IPN_DATABASE_BLACKLIST_COUNT+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseBlackListCount==null?C.EMPTY:databaseBlackListCount)+C.NEXT_LINE;
+      str+=IPN_DATABASE_BLACKLIST_TIMEOUT+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseBlackListTimeout==null?C.EMPTY:databaseBlackListTimeout)+C.NEXT_LINE;
+      str+=IPN_DATABASE_VALID_CONNECTION+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(databaseValidConnection==null?C.EMPTY:databaseValidConnection)+C.NEXT_LINE;
+      str+=C.NEXT_LINE;
+      str+=INI_GROUP_NAME_OPEN+IGN_SERVICE+INI_GROUP_NAME_CLOSE+C.NEXT_LINE;
+      str+=IPN_SERVICE_TEMPLATES+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(serviceTemplates==null?C.EMPTY:serviceTemplates)+C.NEXT_LINE;
+      str+=IPN_SERVICE_PAGES+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(servicePages==null?C.EMPTY:servicePages)+C.NEXT_LINE;
+      str+=IPN_SERVICE_TRASH+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(serviceTrash==null?C.EMPTY:serviceTrash)+C.NEXT_LINE;
+      str+=IPN_SERVICE_FILES+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(serviceFiles==null?C.EMPTY:serviceFiles)+C.NEXT_LINE;
       if(serviceStartsList!=null&&serviceStartsList.size()>0){
         Enumeration e=serviceStartsList.elements();
         while(e.hasMoreElements()){
           s=(String)e.nextElement();
-          str+=IPN_SERVICE_START+SPACE+INI_DELIM_PARAM_VALUE+SPACE+(s==null?EMPTY:s)+NEXT_LINE;
+          str+=IPN_SERVICE_START+C.SPACE+INI_DELIM_PARAM_VALUE+C.SPACE+(s==null?C.EMPTY:s)+C.NEXT_LINE;
         }
       }
       Convert.writeToFile(manager.getServletFilepath()+FILEPATH_INI,str.getBytes());
@@ -5942,7 +5950,7 @@ class Initial implements Interface,tools.Interface
 }
 //-----------------------------------log--------------------------------------//
 //logger data to ...
-class Log implements Interface,tools.Interface//NEED TO CHANGE LOG CLASS
+class Log implements I
 {
   private FileOutputStream outStream=null;
   private Manager manager=null;
@@ -5964,7 +5972,7 @@ class Log implements Interface,tools.Interface//NEED TO CHANGE LOG CLASS
     String str=this.manager.getLogFilepathWithDate(this.filepath);
     try{
       if(str!=null&&str.length()>0){outStream=new FileOutputStream(str,true);ret_val=true;}
-    }catch(Exception e){System.out.println(this.manager.getMessageByID(ERROR_LOG_OPEN_FAILED)+SPACE+e.toString());}
+    }catch(Exception e){System.out.println(this.manager.getMessageByID(ERROR_LOG_OPEN_FAILED)+C.SPACE+e.toString());}
     notifyAll();
     return ret_val;
   }
@@ -5986,24 +5994,24 @@ class Log implements Interface,tools.Interface//NEED TO CHANGE LOG CLASS
   {
     String message=manager.getLogMessageByID(id);
     int message_type=manager.getLogTypeByID(id);
-    String str=new Date().toString()+message+MESSAGE_DELIM_SUBVALUES+SESSION_NUMBER+Convert.toString(session_id)+NEXT_LINE;
+    String str=new Date().toString()+message+MESSAGE_DELIM_SUBVALUES+SESSION_NUMBER+Convert.toString(session_id)+C.NEXT_LINE;
     try{
       if(outStream!=null)outStream.write(str.getBytes());
       if(manager.getDefaultDatabaseSessions()!=null)this.writeLogDatabase(message_type,str);
       //if(manager.isDebug())System.out.println(str);
-    }catch(Exception e){System.out.println(manager.getMessageByID(ERROR_LOG_WRITE_FAILED)+SPACE+e.toString());}
+    }catch(Exception e){System.out.println(manager.getMessageByID(ERROR_LOG_WRITE_FAILED)+C.SPACE+e.toString());}
     notifyAll();
   }
   public synchronized void write(long session_id,int id,String value)
   {
     String message=manager.getLogMessageByID(id);
     int message_type=manager.getLogTypeByID(id);
-    String str=new Date().toString()+message+MESSAGE_DELIM_SUBVALUES+SESSION_NUMBER+Convert.toString(session_id)+MESSAGE_DELIM_SUBVALUES+value+NEXT_LINE;
+    String str=new Date().toString()+message+MESSAGE_DELIM_SUBVALUES+SESSION_NUMBER+Convert.toString(session_id)+MESSAGE_DELIM_SUBVALUES+value+C.NEXT_LINE;
     try{
       if(outStream!=null)outStream.write(str.getBytes());
       if(manager.isLog2Database()&&manager.getDefaultDatabaseSessions()!=null)this.writeLogDatabase(message_type,str);
       //if(manager.isDebug())System.out.println(str);
-    }catch(Exception e){System.out.println(manager.getMessageByID(ERROR_LOG_WRITE_FAILED)+SPACE+e.toString());}
+    }catch(Exception e){System.out.println(manager.getMessageByID(ERROR_LOG_WRITE_FAILED)+C.SPACE+e.toString());}
     notifyAll();
   }
   public synchronized void write(String value)//specific data write
@@ -6011,21 +6019,21 @@ class Log implements Interface,tools.Interface//NEED TO CHANGE LOG CLASS
     try{
       if(outStream!=null)outStream.write(value.getBytes());
       //if(manager.isDebug())System.out.println(value);
-    }catch(Exception e){System.out.println(manager.getMessageByID(ERROR_LOG_WRITE_FAILED)+SPACE+e.toString());}
+    }catch(Exception e){System.out.println(manager.getMessageByID(ERROR_LOG_WRITE_FAILED)+C.SPACE+e.toString());}
     notifyAll();
   }
 }
 //--------------------------------message-------------------------------------//
 //messages to log ...
-final class MessageList implements Interface,tools.Interface
+final class MessageList implements I
 {
   public static String getText(int id)
   {
-    String ret_val=EMPTY;
+    String ret_val=C.EMPTY;
     switch(id){
       //[info]
       case INFO_DEVELOPER_DESCRIPTION:ret_val="[ ABTO3BIT software company 2006 - 2016 c ]";break;
-      case INFO_SERVER_DESCRIPTION:ret_val="[ <skyDrakkar> 2.5 dragonFire release 20.01.2016 ]";break;
+      case INFO_SERVER_DESCRIPTION:ret_val="[ <skyDrakkar> 3.0 dragonFire release 03.03.2016 ]";break;
       case INFO_SERVER_LOADING:ret_val="Loading >>>";break;
       case INFO_SERVER_UNLOADING:ret_val="Unloading <<<";break;
       case INFO_SERVER_SHUTDOWN:ret_val="^";break;
