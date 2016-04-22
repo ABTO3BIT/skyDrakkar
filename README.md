@@ -11,7 +11,7 @@ Goals of skyDrakkar project can be summarized in the following points:
 - Provide %CENT APIs to create powerful RESTful Web services with personal classes in Java.
 - Make it easy to create RESTful Web services without compilations and reloads.
 
-skyDrakkar Web service "get_language.html" example:
+skyDrakkar Web service http request "get_language.html" example:
 
 http request: http://localhost/service/start?name=/json/get_language&user=customer&rows=1
 
