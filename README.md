@@ -1,17 +1,17 @@
-&lt;skyDrakkar> framework
+<skyDrakkar> framework
 ----------------------
 
-&lt;skyDrakkar> RESTful Web Services framework is a opensource framework for developing in %CENT language
+<skyDrakkar> RESTful Web Services framework is a opensource framework for developing in %CENT language
 
-&lt;skyDrakkar> provides it's own %CENT API for RESTful Web services creation in html text files.
+<skyDrakkar> provides it's own %CENT API for RESTful Web services creation in html text files.
 Easy connects to databases via jdbc drivers, additional functionallity easy provides in personal Java classes.
 
-Goals of &lt;skyDrakkar> project can be summarized in the following points:
+Goals of <skyDrakkar> project can be summarized in the following points:
 
 - Provide %CENT APIs to create powerful RESTful Web services with personal classes in Java.
 - Make it easy to create RESTful Web services without compilations and reloads.
 
-&lt;skyDrakkar> Web service "get_language.html" example:
+<skyDrakkar> Web service "get_language.html" example:
 
 http request: http://localhost/service/start?name=/json/get_language&user=customer&rows=1
 
