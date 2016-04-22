@@ -17,7 +17,8 @@ http request: http://localhost/service/start?name=/json/get_language&user=custom
 
 http response: {"results":[{"session_id":"1","language":"ENGLISH","active":"1"}
 
-html text file code:
+html text file example
+----------------------
 
     %writedata/json/param0%writedata
     %writedata/json/param1%writedata
